@@ -3,6 +3,7 @@
   "version": "16.14.2",
   "private": true,
   "scripts": {
+    "start":"vite",
     "dev": "vite",
     "preview": "vite preview",
     "test:unit": "vitest",
