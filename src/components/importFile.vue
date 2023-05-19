@@ -1,15 +1,16 @@
 <template>
   <div>
+     
     <DropdownItem @click="insertImg"><Icon type="ios-image" /><span style="margin-left:10px">Upload image</span></DropdownItem>
     <!-- <DropdownItem @click="insert"><Icon type="ios-image" /><span style="margin-left:10px">json</span></DropdownItem> -->
     <DropdownItem @click="loadTemplate"><Icon type="ios-image" /><span style="margin-left:10px">templates</span></DropdownItem>
     <DropdownItem @click="loadElement"><Icon type="ios-image" /><span style="margin-left:10px">elements</span></DropdownItem>
+    
     <Modal
       v-model="template"
       title="Choose the Template"
       :footer-hide="true"
       width="60%"
-      :loading="loading"
       >
       <div class="row">
         <div class="col-md-2">
@@ -17,24 +18,23 @@
         <div class="col-md-9" >
           <div class="template-header row">
             <div  class="col-md-8">
-              <Input suffix="ios-search" placeholder="Enter text" v-model="keyword_template"/>
+              <Input suffix="ios-search" placeholder="Enter word for search" v-model="keyword_template"/>
             </div>
             <div  class="col-md-4">
-                <b-form-select class="mb-3" v-model="selected_template_type" @change="groupChange" size="sm">
-                  <option v-for="item in group_types_template" :value="item" :key="item">{{item}}</option>
-                </b-form-select>              
+              <b-form-select class="mb-3" v-model="selected_template_type" @change="groupChange" size="sm">
+                <option v-for="item in group_types_template" :value="item" :key="item">{{item}}</option>
+              </b-form-select>              
             </div>              
           </div>
 
-          <!-- <loader :active="loaderActive" style="z-index:100000"></loader> -->
-          
+          <Loader :active="loading" class="child"/>
           <div
             id="main"
             class="template-content"
             v-for="(item, index) in filterResultDemoLists"
             :key="index"
             >
-
+            
             <div class="image-box" imgId = {{item.template_id}} @click="()=>insertDemoTemplate(item.template_id)">
               <img v-bind:src="item.template_image_url" style="width:150px;height:150px;" id="images0"/>
               <div><span>{{item.template_name}}</span></div>
@@ -50,17 +50,14 @@
         title="Choose the Template"
         :footer-hide="true"
         width="60%"
-        :loading="loading"
         >
         <div class="row">
           <div class="col-md-2">
-            <!-- asdfasdf -->
           </div>
           <div class="col-md-9" >
             <div class="template-header row">
-
               <div  class="col-md-8">
-                <Input suffix="ios-search" placeholder="Enter text" v-model="keyword_element"/>
+                <Input suffix="ios-search" placeholder="Enter word for search" v-model="keyword_element"/>
               </div>
 
                 <div class="col-md-4">
@@ -69,14 +66,14 @@
                   </b-form-select>                        
                 </div>              
             </div>
-            
+            <Loader :active="loading" class="child"/>
             <div
               id="main"
               class="template-content"
               v-for="(item, index) in filterResultElementLists"
               :key="index"
               >
-
+  
               <div class="image-box" imgId = {{item.id}} @click="()=>insertElement(item.id)">
                 <img v-bind:src="item.image_url" style="width:150px;height:150px;" id="images0"/>
                 <div><span style="color:red;font-weight:bold">{{item.title}}</span></div>
@@ -93,12 +90,14 @@
 </template>
 
 <script>
-import { getImgStr, selectFiles,downFontByJSON } from '@/utils/utils';
+
+import { getImgStr, selectFiles} from '@/utils/utils';
 import select from '@/mixins/select';
 import { v4 as uuid } from 'uuid';
 import {productImage} from '@/utils/imgConstant';
 import {getAllTemps,getTempById,getUserTempById,getAllElements,getElementById} from "@/service/endpoint";
-import loader from "./loader.vue";
+import Loader from "./loader.vue";
+
 export default {
   name: 'ToolBar',
   mixins: [select],
@@ -107,7 +106,7 @@ export default {
     return {
       element:false,
       template:false,
-      loading: true,
+      loading: false,
       border: true,
       hover: true,
       selected_template_type:'All templates',
@@ -123,8 +122,8 @@ export default {
       loaderActive:true
     };
   },
-  component:{
-    loader
+  components:{
+    Loader
   },
 
   created() {
@@ -152,7 +151,7 @@ export default {
     },
 
     elementChange(evt){
-      if(evt = "All elements"){
+      if(evt == "All elements"){
         this.filterResultElementLists = this.elementLists;
       }else{
         this.filterResultElementLists = this.filterElementLists('type',evt);
@@ -161,6 +160,7 @@ export default {
 
     filterElementLists(search_type,value){
       if(this.elementLists != ''){
+
         if(search_type == 'keyword'){
           let filteredElementLists = this.elementLists.filter((el) => {
             return el.title.toLowerCase().includes(value);
@@ -178,6 +178,7 @@ export default {
           });
           return orderedElementLists;          
         }
+
       }
     },
 
@@ -299,6 +300,7 @@ export default {
 
     loadTemplate(){
       this.template = true; 
+      this.loading = true;
       getAllTemps().then((resp)=>{
         var templist = new Array();
         var tempTypes = [];
@@ -336,20 +338,23 @@ export default {
       }).catch(error => {
             console.log(error);
       });
+      setTimeout(() => {
+        this.loading = false;
+        
+      }, 1000);      
     },
     
-    loadElement(){
+    loadElement(){   
       this.element = true;
-
+      this.loading = true;
       getAllElements().then((resp)=>{
-
         var templist = new Array();
         var data = resp.data;
         var tempTypes = [];
         if(data){
           data.forEach((e ,i)=> {
             if(i==0){
-              tempTypes.push("All Elements");
+              tempTypes.push("All elements");
             }
             var id = data[i].id;
             var title = data[i].title;
@@ -374,6 +379,10 @@ export default {
       }).catch(error => {
         console.log(error);
       });         
+      setTimeout(() => {
+        this.loading = false;
+        
+      }, 1000);
     },
 
     insert() {
@@ -506,5 +515,16 @@ export default {
 .template-style{
   border-radius:10px;
   cursor: pointer;
+}
+
+.child {
+  // width: 50px;
+  // height: 50px;
+  /* Center vertically and horizontally */
+  z-index: 10000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px; /* Apply negative top and left margins to truly center the element */
 }
 </style>

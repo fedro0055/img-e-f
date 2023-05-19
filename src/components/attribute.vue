@@ -486,7 +486,6 @@ export default {
   methods: {
     initialProductImageState(){
       var productImageState = this.canvas.c.getActiveObject().nonBgImageState;
-      console.log(productImageState)
       this.nonBgImageState = productImageState;
       // if(productImageState == true){
       //   this.productImageState = "productImage"
@@ -635,7 +634,6 @@ export default {
     //emptyImage
 
     nonproductImageChange(evt){
-      console.log(evt)
       if(evt == true){
         this.nonBgImageState = true;
         this.removeBg();
@@ -860,7 +858,6 @@ export default {
           oldUrl:oldUrl,
           nonBgImageState:this.nonBgImageState
         });
-
         this.canvas.c.remove(this.canvas.c.getActiveObjects()[0])
         this.canvas.c.add(imgInstance);
         this.canvas.c.setActiveObject(imgInstance);
@@ -870,7 +867,6 @@ export default {
     },
     showProductImage(){
       var id = this.canvas.c.getActiveObject().id;
-      console.log(id)
       if(id == "nonBgImage"){
         this.insertEmpty(productImage,"productImage",nonBgImage);        
         return true;
@@ -914,8 +910,6 @@ export default {
         target.width = w;
         target.height = h;
         canvasContext.putImageData(canvasImageData,0,0);
-        document.body.append(canvas);   
-        console.log(canvas.toDataURL());
         this.insertEmpty(canvas.toDataURL(),id,oldUrl);        
       }
     }

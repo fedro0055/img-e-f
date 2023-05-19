@@ -106,12 +106,10 @@ export default {
         },
 
       });
-
+      
 	    group.setCoords();	
       group.on({
           'scaling': function(e) {
-            console.log(this.left,this.top);
-            console.log(this._objects[0].left,this._objects[0].top)
               var obj = this,
                   w = obj.width * obj.scaleX,
                   h = obj.height * obj.scaleY,

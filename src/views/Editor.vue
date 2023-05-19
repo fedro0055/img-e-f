@@ -1,5 +1,12 @@
 <template>
   <div class="home">
+    <!-- <div style="width:100%">
+      <div style="width:400px;height:400px;background-color:yellow;position:fixed;z-index:10000;margin-left:auto">
+      <loader :active="true" style="z-index:100000;width:200px;height:200px;"></loader>
+      </div>
+    </div>     -->
+<!-- <div class="container"> -->
+<!-- </div>     -->
     <header class="header text-center row" style="width: 100%;z-index:100000">
       <div class="">
 
@@ -18,6 +25,7 @@
             <b-form-input class="col-md-8" size="sm" v-model="canvasName" id="canvasName"></b-form-input>
           </div>
         </Modal>          
+
       </div>
       <div class="col-6">
         <!-- <Button class="ivu-btn ivu-btn-text" icon="ios-flash" size="small">Liver Preview</Button>
@@ -30,7 +38,10 @@
       </div> -->
     </header>
     <div>
+
+
       <Content style="display: flex; height: calc(100vh - 64px);">
+        <!-- <loader class="child" :active="true"></loader> -->
         
         <!-- --------------------------------- Import Button(+) ----------------------------------- -->
         <Dropdown class="m-md-4 plus-btn" v-if="show" placement="bottom-start">
@@ -101,7 +112,7 @@ import attribute from '@/components/attribute.vue';
 
 // functional components
 import EventHandle from '@/utils/eventHandler';
-
+import loader from "@/components/loader.vue"
 import "@/assets/css/main.css"
 
 import { fabric } from 'fabric';
@@ -141,35 +152,11 @@ export default {
     attribute,
     importFile,
     save,
-    zoom
+    zoom,
+    loader
   },
 
   mounted() {
-    // Jimp.read('@/assets/img/ImgW1.png')
-    //   .then(image => {
-    //       image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
-    //           var red   = this.bitmap.data[idx + 0];
-    //           var green = this.bitmap.data[idx + 1];
-    //           var blue  = this.bitmap.data[idx + 2];
-    //           var alpha = this.bitmap.data[idx + 3];
-
-    //           // if the pixel color is in the range of the background color
-    //           if (red > 200 && green > 200 && blue > 200) { 
-    //               // make this pixel transparent
-    //               this.bitmap.data[idx + 0] = 0;
-    //               this.bitmap.data[idx + 1] = 0;
-    //               this.bitmap.data[idx + 2] = 0;
-    //               this.bitmap.data[idx + 3] = 0;
-    //           }
-    //       });
-    //       image.write('output.png');
-    //   })
-    //   .catch(err => {
-    //       console.error(err);
-    //   });
-
-
-
 
     this.canvas = new fabric.Canvas('canvas', {
       fireRightClick: true,
@@ -240,4 +227,26 @@ span {
   border-radius:10px
 }
 
+// .container {
+//   font-family: arial;
+//   font-size: 24px;
+//   margin: 25px;
+//   width: 350px;
+//   height: 200px;
+//   outline: dashed 1px black;
+//   /* Setup */
+//   position: relative;
+// }
+
+.child {
+  // width: 50px;
+  // height: 50px;
+  background-color: red;
+  /* Center vertically and horizontally */
+  z-index: 10000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px; /* Apply negative top and left margins to truly center the element */
+}
 </style>

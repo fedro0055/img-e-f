@@ -1,7 +1,6 @@
 <template>
 <div>
   <div style="display:none">
-    <div>asdfasdf</div>
       <div id="workspace" style="width: 920px;height:500px; position: relative; background: #f1f1f1;">
         <div class="canvas-box">
           <div class="inside-shadow"></div>

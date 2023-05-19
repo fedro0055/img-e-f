@@ -48,8 +48,6 @@
                 </div>              
             </div>       
             <hr />   
-
-
     </div>
 </template>
 <script>
@@ -82,25 +80,28 @@ export default {
   },
 
   methods: {
-    showPreview(){
-        this.loaderActive = true;
 
-        getShortTags().then((tags)=>{
-            getPreviewImage(this.keyword).then((res)=>{
-                this.product_images = res.data;
-            }).then(()=>{
-                this.product_images.forEach(async (item,index)=>{
-                    var first_product_image =  item;
-                    if(first_product_image!=null){
-                        await this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
-                    }
-                });
-            });   
-        });
-        setTimeout(() => {
-          this.loaderActive = false;
-        }, 7000);
-    },
+    showPreview(){
+            this.loaderActive = true;
+            getShortTags().then((tags)=>{
+                getPreviewImage(this.keyword).then((res)=>{
+                    this.product_images = res.data;
+                }).then(()=>{
+
+                    this.product_images.forEach(async (item,index)=>{
+                        var first_product_image =  item;
+                        if(first_product_image!=null){
+                            await this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
+                        }
+                    });
+
+                });   
+            });
+            setTimeout(() => {
+            this.loaderActive = false;
+            }, 7000);
+        },
+
     }
 };
 </script>

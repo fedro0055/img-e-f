@@ -170,7 +170,7 @@ class Editor extends EventEmitter {
   }
 
   getJson() {
-    return this.canvas.toJSON(['id',"productImageState",'item_name','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
+    return this.canvas.toJSON(['id',"nonBgImageState",'item_name','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
   }
 
   /**
@@ -320,27 +320,71 @@ class Editor extends EventEmitter {
     return jsonFile;
   }
 
+  removeBg(url){
+
+    const image = new Image();
+    image.src = url;
+    image.onload = ({target}) =>{
+
+      const w = Math.round(target.width);
+      const h = Math.round(target.height);
+      const canvas = document.createElement("canvas");
+      
+      canvas.width = w;
+      canvas.height = h;
+      const canvasContext = canvas.getContext("2d");
+      canvasContext.drawImage(target,0,0,target.width,target.height,0,0,w,h);
+      const canvasImageData = canvasContext.getImageData(0,0,w,h);
+
+      for(let index=0,dataLength = canvasImageData.data.length;index<dataLength;index += 4){
+        const r = canvasImageData.data[index];
+        const g = canvasImageData.data[index + 1];
+        const b = canvasImageData.data[index + 2];
+
+        if([r,g,b].every((item)=> item > 240))
+          canvasImageData.data[index + 3] = 0;
+      }
+
+      target.width = w;
+      target.height = h;
+      canvasContext.putImageData(canvasImageData,0,0);
+      console.log(canvas.toDataURL())
+      return canvas.toDataURL();
+    }
+  }
+  
   changeProductImageLists(final_product_image,tags,index){
+
       var jsonFile = JSON.stringify(this.changeTags(this.getJson(),tags,final_product_image));
       var canvas = document.createElement("CANVAS");
       canvas.id = "tempCanvas";
       canvas.style.display = "none";
+
       var canvasClone = new fabric.Canvas("tempCanvas",{
         fireRightClick: true,
         stopContextMenu: true,
         controlsAboveOverlay: true,        
       });
-      canvasClone.loadFromJSON(jsonFile, () => {
 
+      canvasClone.loadFromJSON(jsonFile, () => {
+        
         canvasClone.renderAll.bind(canvasClone);
-        const productImage = canvasClone.getObjects().find((item) => item.id === "productImage");
+        const productImage = canvasClone.getObjects().find((item) => item.id === "productImage" || item.id == "nonBgImage");
+        // console.log(final_product_image.image_link);
+        // if(productImage.nonBgImageState === true){
+        //   console.log(this.removeBg(final_product_image.image_link))
+        //   final_product_image.image_link = this.removeBg(final_product_image.image_link);
+        // }
+
         fabric.Image.fromURL(final_product_image.image_link, (final_product_image) => {
-          final_product_image._element.crossOrigin = 'anonymous'
+          final_product_image._element.crossOrigin = 'anonymous';
+
           final_product_image.set({
                 left: productImage.left,
                 top: productImage.top,
                 layerShowPeriod:productImage.layerShowPeriod,
                 id: productImage.id,
+                angle: productImage.angle,
                 item_name: "final_product_image"
               }).setCoords();
           final_product_image.scaleToWidth(productImage.width*productImage.scaleX).setCoords();
@@ -377,6 +421,8 @@ class Editor extends EventEmitter {
       });      
     });
   }
+
+  //change productimage of main canvas
   changeProductImage(final_product_image){
     const productImage = this.canvas.getObjects().find((item) => item.id === "productImage");
 
@@ -403,6 +449,7 @@ class Editor extends EventEmitter {
       
     });    
   }
+
 }
 
 export default Editor;
