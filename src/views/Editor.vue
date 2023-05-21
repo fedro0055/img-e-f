@@ -22,7 +22,7 @@
           >
           <div class="row">
             <label class="col-md-3">Name</label>
-            <b-form-input class="col-md-8" size="sm" v-model="canvasName" id="canvasName"></b-form-input>
+            <b-form-input class="col-md-8" size="sm" v-model="canvasName" id="inputCanvasName"></b-form-input>
           </div>
         </Modal>          
 
@@ -171,10 +171,10 @@ export default {
     canvas.c.renderAll();
     setTimeout(() => {
 
-      if(canvas.c.template_name == undefined || canvas.c.template_name == ''){
+      if(canvas.c.name == undefined || canvas.c.name == ''){
         this.canvasName = "New template"
       }else{
-        this.canvasName = canvas.c.template_name;
+        this.canvasName = canvas.c.name;
       }
 
       //when delete keyboard press, select element is deleted

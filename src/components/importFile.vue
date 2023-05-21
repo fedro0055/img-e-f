@@ -35,9 +35,9 @@
             :key="index"
             >
             
-            <div class="image-box" imgId = {{item.template_id}} @click="()=>insertDemoTemplate(item.template_id)">
-              <img v-bind:src="item.template_image_url" style="width:150px;height:150px;" id="images0"/>
-              <div><span>{{item.template_name}}</span></div>
+            <div class="image-box" imgId = {{item.id}} @click="()=>insertDemoTemplate(item.id)">
+              <img v-bind:src="item.image_url" style="width:150px;height:150px;" id="images0"/>
+              <div><span>{{item.name}}</span></div>
             </div>
 
           </div>
@@ -76,7 +76,7 @@
   
               <div class="image-box" imgId = {{item.id}} @click="()=>insertElement(item.id)">
                 <img v-bind:src="item.image_url" style="width:150px;height:150px;" id="images0"/>
-                <div><span style="color:red;font-weight:bold">{{item.title}}</span></div>
+                <div><span style="color:red;font-weight:bold">{{item.name}}</span></div>
               </div>
 
             </div>            
@@ -96,7 +96,7 @@ import select from '@/mixins/select';
 import { v4 as uuid } from 'uuid';
 import {productImage} from '@/utils/imgConstant';
 import {getAllTemps,getTempById,getUserTempById,getAllElements,getElementById} from "@/service/endpoint";
-import Loader from "./loader.vue";
+import Loader from "./loader1.vue";
 
 export default {
   name: 'ToolBar',
@@ -163,7 +163,7 @@ export default {
 
         if(search_type == 'keyword'){
           let filteredElementLists = this.elementLists.filter((el) => {
-            return el.title.toLowerCase().includes(value);
+            return el.name.toLowerCase().includes(value);
           })
           let orderedElementLists = filteredElementLists.sort((a, b) => {
             return b.upvoted - a.upvoted;
@@ -186,7 +186,7 @@ export default {
       if(this.demoTempLists != ''){
         if(search_type == 'keyword'){
           let filteredDemoLists = this.demoTempLists.filter((el) => {
-            return el.template_name.toLowerCase().includes(value);
+            return el.name.toLowerCase().includes(value);
           })
           let orderedDemoLists = filteredDemoLists.sort((a, b) => {
             return b.upvoted - a.upvoted;
@@ -301,7 +301,7 @@ export default {
     loadTemplate(){
       this.template = true; 
       this.loading = true;
-      getAllTemps().then((resp)=>{
+      getAllTemps().then(async (resp)=>{
         var templist = new Array();
         var tempTypes = [];
         var data = resp.data;
@@ -312,9 +312,9 @@ export default {
             if(i==0){
               tempTypes.push("All templates");
             }            
-            var template_id = data[i].template_id;
-            var template_name = data[i].template_name;
-            var template_image_url = data[i].template_image_url;
+            var id = data[i].id;
+            var name = data[i].name;
+            var image_url = data[i].image_url;
             var group_type = data[i].group_type;
 
             if(tempTypes.includes(group_type) == false){
@@ -322,10 +322,10 @@ export default {
             }
 
             templist.push({
-              template_id:template_id,
+              id:id,
               group_type:group_type,
-              template_name:template_name,
-              template_image_url:template_image_url
+              name:name,
+              image_url:image_url
             });           
 
           });     
@@ -333,21 +333,19 @@ export default {
           this.group_types_template = tempTypes;
           this.demoTempLists = templist;
           this.filterResultDemoLists = templist;
-
+        
+          await (this.loading = false);
         }
       }).catch(error => {
             console.log(error);
       });
-      setTimeout(() => {
-        this.loading = false;
-        
-      }, 1000);      
+      
     },
     
-    loadElement(){   
+    async loadElement(){   
       this.element = true;
       this.loading = true;
-      getAllElements().then((resp)=>{
+      await getAllElements().then((resp)=>{
         var templist = new Array();
         var data = resp.data;
         var tempTypes = [];
@@ -357,7 +355,7 @@ export default {
               tempTypes.push("All elements");
             }
             var id = data[i].id;
-            var title = data[i].title;
+            var name = data[i].name;
             var image_url = data[i].image_url;
             var group_type = data[i].group_type;
             if(tempTypes.includes(group_type) == false){
@@ -366,7 +364,7 @@ export default {
             templist.push({
               id:id,
               group_type:group_type,
-              title:title,
+              name:name,
               image_url:image_url
             });           
 
@@ -379,10 +377,7 @@ export default {
       }).catch(error => {
         console.log(error);
       });         
-      setTimeout(() => {
-        this.loading = false;
-        
-      }, 1000);
+      await (this.loading = false);
     },
 
     insert() {
@@ -406,8 +401,10 @@ export default {
         });
       });
     },
+
     // insert empty file
     insertProductImage(file,type) {
+      
        setTimeout(() => {
           const imgEl = document.createElement('img');
           imgEl.src = file || this.imgFile;
@@ -417,7 +414,7 @@ export default {
           var name = this.canvas.editor.getName("image");
           const imgInstance = new this.fabric.Image(imgEl, {
             id: "productImage",
-            item_name:name,
+            item_name:'Product Image',
             nonBgImageState:false,
             layerShowPeriod:{
               mode:'',

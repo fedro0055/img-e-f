@@ -108,35 +108,6 @@ export default {
       });
       
 	    group.setCoords();	
-      group.on({
-          'scaling': function(e) {
-              var obj = this,
-                  w = obj.width * obj.scaleX,
-                  h = obj.height * obj.scaleY,
-                  s = obj.strokeWidth;
-
-              obj.set({
-                  'height'     : h,
-                  'width'      : w,
-                  'scaleX'     : 1,
-                  'scaleY'     : 1,
-              });
-
-              obj._objects[0].set({
-                  'height'     : h,
-                  'width'      : w,
-                  'scaleX'     : 1,
-                  'scaleY'     : 1,
-                  "left":0 - (obj.width) / 2,
-                  "top":0 - (obj.height) / 2
-              });
-
-              obj._objects[1].set({
-                "left":0 - (obj.width) / 2,
-                "top":0 - (obj.height) / 2,
-              });              
-          }
-      });        
       this.canvas.c.add(group);
       rect.set("width",group.width*group.scaleX+5);
       rect.set("height",group.height*group.scaleY+5);
@@ -144,7 +115,6 @@ export default {
       this.canvas.c.setActiveObject(group);
     },
     
-
     addImg(e) {
       const imgEl = e.target.cloneNode(true);
       const imgInstance = new this.fabric.Image(imgEl, {

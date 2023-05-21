@@ -100,9 +100,7 @@
           <Input v-model="this.fontAttr.string" @on-change="(value) =>changeString(value)" @on-keyup="(value) =>textKeyPress(value)" class="mb-2 mt-2" style="width:98%;">
             <template #append>
               <Select style="width:70px" @on-change="changeAddTag" v-model="shortTag" size="small">
-
-                  <Option v-for="tag in tags" :value="'['+tag+']'" :key="tag"></Option>
-
+                <Option v-for="tag in tags" :value="'['+tag+']'" :key="tag"></Option>
               </Select>
             </template>
           </Input>
@@ -210,11 +208,15 @@
               Long text handling
             </div>  
             <div class="col-4" style="margin: 0;">
+              <b-form-select class="mb-3" v-model="selected_text_manage_type" @change="handleLongText" size="sm">
+                <option value="automatic" selected>Automatic font size</option>
+                <option value="shorten">Shorten text</option>                
+              </b-form-select>     
+<!-- 
               <Select @on-change="handleLongText">
-                
                 <Option value="automatic" selected>Automatic font size</Option>
                 <Option value="shorten">Shorten text</Option>
-              </Select>
+              </Select> -->
             </div>   
           </div>
           <!-- -------------------  End Long text handling  ---------------- --> 
@@ -375,6 +377,8 @@ import Color from './color.vue';
 import Align from './align.vue';
 import $ from "jquery";
 import {getShortTags} from "@/service/endpoint.js";
+import OpenType from 'opentype.js';
+import FontFaceObserver from 'fontfaceobserver';
 
 export default {
     mixins: [select],
@@ -385,6 +389,7 @@ export default {
     },  
     data(){
         return{
+          selected_text_manage_type:'automatic',
           showModeText:'',
           shortTag:"ppppppp",
           activeObject:'',
@@ -495,14 +500,24 @@ export default {
         }        
     },
     created(){
+      
       this.canvas.c.on("object:moving",(e)=>{
         this.baseAttr.top = this.canvas.c.getActiveObject().top;
         this.baseAttr.left =this.canvas.c.getActiveObject().left;
-      });       
+        if(this.canvas.c.getActiveObject().customType == "text"){
+          this.hiddenOutArea(this.canvas.c.getActiveObject())
+        }
+      });
+
       this.canvas.c.on("object:modified",(e)=>{
         this.baseAttr.width = this.canvas.c.getActiveObject().width;
         this.baseAttr.height =this.canvas.c.getActiveObject().height;
-      });             
+        if(this.canvas.c.getActiveObject().customType == "text"){
+          this.hiddenOutArea(this.canvas.c.getActiveObject())
+        }
+        
+      });   
+
       this.event.on('selectOne', (e) => {
         if(e[0].type == "group"){
           const activeObject = e[0]._objects[1];
@@ -519,14 +534,12 @@ export default {
           this.fontAttr.fontStyle = activeObject.get('fontStyle');
           this.fontAttr.textBackgroundColor = activeObject.get('textBackgroundColor');
           this.fontAttr.fontWeight = activeObject.get('fontWeight');
-          
         }
             
         });
 
-
-
     },
+
     mounted(){
       this.initSet();
       getShortTags().then((res)=>{
@@ -546,16 +559,16 @@ export default {
         },      
 
         changeBorderState(value){
-          if(value == false){
 
+          if(value == false){
             const activeObject = this.canvas.c.getActiveObject()._objects[0];
             activeObject.set('stroke','').setCoords();
             activeObject.set('strokeWidth',0).setCoords();
             this.baseAttr.strokeWidth = 0;
             this.baseAttr.stroke = '';
             this.canvas.c.renderAll();
-
           }
+
         },
         initSet(){
           var activeObject = this.canvas.c.getActiveObject();
@@ -568,8 +581,6 @@ export default {
                 this.fontAttr.rectFill = activeObject._objects[0].fill;
               }
               //<---------------fill of rect setting ------------->
-
-              // if(activeObject.)  filter portion
 
               // <---------border of rect setting ---------->
               if(activeObject._objects[0].stroke != ''){
@@ -621,31 +632,76 @@ export default {
         },      
 
         uploadFontClick(){
+          console.log("asdf");
           $("#uploadFont").click();
         },
-
+        saveAs(buffer, filename) {
+          const blob = new Blob([buffer]);
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(objectUrl);
+        },
         uploadFont(e){
-          var files = e.target.files[0];
-          var fontName = files.name.split('.')[0];
+          const reader = new FileReader();
 
-          // const font = new FontFaceObserver(fontName);
-          const activeObject = this.canvas.c.getActiveObject()._objects[1];
-          if (this.fontFamilyList.includes(fontName)) {
-            activeObject && activeObject.set('fontFamily', fontName).setCoords();
-            setTimeout(()=>{
-              this.canvas.c.renderAll();
-            },300);
-            return;
+          reader.addEventListener('load', () => {
+            const fontBuffer = reader.result;
+            const font = OpenType.parse(fontBuffer);
 
-          }else{
-            this.fontFamilyList.push(fontName);
-            activeObject && activeObject.set('fontFamily', fontName).setCoords();
-            setTimeout(()=>{
-              this.canvas.c.renderAll();
-            },300);
-            return;    
+            var fontName = font.names.fontFamily.en;
 
-          }
+            // const font = new FontFaceObserver(fontName);
+            const activeObject = this.canvas.c.getActiveObject()._objects[1];
+            if (this.fontFamilyList.includes(fontName)) {
+              activeObject && activeObject.set('fontFamily', fontName).setCoords();
+              setTimeout(()=>{
+                this.canvas.c.renderAll();
+              },300);
+              return;
+
+            }else{
+              this.fontFamilyList.push(fontName);
+              activeObject && activeObject.set('fontFamily', fontName).setCoords();
+              setTimeout(()=>{
+                this.canvas.c.renderAll();
+              },300);
+              return;    
+            }
+            // const font = new FontFaceObserver(fontName);
+            // const style = document.createElement('style');            
+            // font.load().then(() => {
+            //   style.innerHTML = `@font-face {
+            //     font-family: '${this.fontName}';
+            //     src: url('${this.fontUrl}');
+            //   }`;
+            // console.log(style)
+            //   document.head.appendChild(style);
+            //   // this.$emit('font-loaded');
+            // });            
+            // font.names.fontFamily = 'My New Font';
+            // font.names.fontSubfamily = 'Regular';
+            // font.unitsPerEm = 1000;
+            // font.ascender = 800;
+            // font.descender = -200;
+            // font.glyphs.push(new OpenType.Glyph({
+            //   name: 'A',
+            //   unicode: 65,
+            //   advanceWidth: 600,
+            //   path: new OpenType.Path()
+            // }));      
+
+            // const newFontBuffer = font.toArrayBuffer();
+            // console.log(newFontBuffer)
+
+          });
+
+          reader.readAsArrayBuffer(e.target.files[0]);    
+
+          
+
         },
         // <!----------- control box size   -------->
         changeSelectFillType(key,value){
@@ -683,36 +739,35 @@ export default {
         handleLongText(evt){
           var activeObject = this.canvas.c.getActiveObject()._objects[1];
           var string = this.fontAttr.string;
-            if(evt == 'shorten'){
-              this.showModeText = "shorten"
+            if(evt == 'automatic'){
+              this.selected_text_manage_type = "automatic";
               if(150 >=string.length && string.length >= 50){
-                activeObject.set("fontSize",21).setCoords();
+                activeObject.set("fontSize",16).setCoords();
                 this.canvas.c.renderAll();
                 return;
               }
               if(250>=string.length&&string.length >= 150){
-                activeObject.set("fontSize",18).setCoords();
+                activeObject.set("fontSize",10).setCoords();
                 this.canvas.c.renderAll();
                 return;
               }
               if(350>=string.length&&string.length >= 250){
-                activeObject.set("fontSize",16);
+                activeObject.set("fontSize",8);
                 this.canvas.c.renderAll();
                 return;
               }
             }else{
-              this.showModeText = "automatic"
-                // // activeObject
-                // if(string.length >20){
-                  
-                // }
-                activeObject.set("fontSize",activeObject.fontSize).setCoords();
+              console.log("aaaaaaaa");
+              // console.log(this.fontAttr.fontSize);
+              activeObject.set("fontSize",this.fontAttr.fontSize).setCoords();
+              this.selected_text_manage_type = "shorten";
+
+              activeObject.set("fontSize",activeObject.fontSize).setCoords();
             }
             this.canvas.c.renderAll();
         },
         changeAddTag(value){
             this.changeString(this.fontAttr.string+value);
-            // this.handleLongText(this.showModeText)
         },        
         // bold
         changeFontWeight(key, value) {
@@ -754,20 +809,23 @@ export default {
 
         //change string
         changeString(value){
+
             if(typeof(value)=="string"){
                 var string = value;
             }else{
                 var string = value.target.value;
             }
+
             this.fontAttr.string = string;
-            
+
             this.changeCommon('text',string);
-            this.handleLongText(this.showModeText)
+            this.handleLongText(this.selected_text_manage_type)
 
         },
+        
         // modify font
         changeFontFamily(fontName) {
-
+          console.log("")
           if (!fontName) return;
           this.canvas.c.getActiveObject()._objects[1].set("fontFamily",fontName).setCoords();
           this.canvas.c.renderAll();
@@ -796,7 +854,30 @@ export default {
 
           }
         },
-
+        showOutArea(activeObject){
+          activeObject._objects[1].set("scaleX",activeObject.width/activeObject._objects[1].width).setCoords();
+          activeObject._objects[1].set("scaleY",activeObject.width/activeObject._objects[1].width).setCoords();
+          activeObject._objects[0].set("width",activeObject.width).setCoords();
+          activeObject._objects[1].set("width",activeObject.width).setCoords();
+          this.canvas.c.renderAll();
+        },
+        hiddenOutArea(activeObject){
+          
+          var clipRect = new fabric.Rect({
+            originX: 'left',
+            originY: 'top',
+            left: activeObject.left,
+            top: activeObject.top,
+            width: activeObject.width,
+            height: activeObject.height,
+            angle:activeObject.angle,
+            absolutePositioned: true,
+          });     
+          
+          activeObject.clipPath = clipRect;
+          this.canvas.c.renderAll();                  
+                
+        },
         //change property
         changeProperty(key, evt) {
 
@@ -864,17 +945,16 @@ export default {
             return;                
           }
 
-
           if(key == "text"){
             this.activeObject.set("text",evt).setCoords();
             const activeObject = this.canvas.c.getActiveObject();
-            if(activeObject.width<activeObject._objects[1].width){
-              activeObject._objects[1].set("scaleX",activeObject.width/activeObject._objects[1].width).setCoords();
-              activeObject._objects[1].set("scaleY",activeObject.width/activeObject._objects[1].width).setCoords();
-              activeObject._objects[0].set("width",activeObject.width).setCoords();
-              activeObject._objects[1].set("width",activeObject.width).setCoords();
-              this.canvas.c.renderAll();
+            if(activeObject.width<activeObject._objects[1].width && this.selected_text_manage_type == "shorten"){
+              this.hiddenOutArea(activeObject);
             }
+            if(activeObject.width<activeObject._objects[1].width && this.selected_text_manage_type == "automatic"){
+              console.log("aaaaa")
+              this.showOutArea(activeObject);
+            }            
             return;
           }
           // Rotation Angle Adaptation

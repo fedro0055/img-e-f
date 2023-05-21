@@ -18,9 +18,9 @@
         :key="index"
         >
         
-          <router-link :to="'/editor/edit/'+item.template_id">
-            <div class="image-box" imgId = {{item.template_id}}>
-              <img v-bind:src="item.template_image_url" style="width:150px;height:150px;"/>
+          <router-link :to="'/editor/edit/'+item.id">
+            <div class="image-box" imgId = {{item.id}}>
+              <img v-bind:src="item.image_url" style="width:150px;height:150px;"/>
             </div>
           </router-link>
 
@@ -40,6 +40,7 @@ import Editor from '@/core';
 import {getAllUserTemps} from "@/service/endpoint";
 const event = new EventHandle();
 const canvas = {};
+
 export default {
   name: 'Templates',
   data(){
@@ -69,14 +70,13 @@ export default {
     getAllUserTemps().then((resp)=>{
       var data = resp.data;
       data.forEach((e ,i)=> {
-        var template_id = data[i].template_id;
-        var template_name = data[i].template_name;
-        var template_image_url = data[i].template_image_url;
-
+        var id = data[i].id;
+        var name = data[i].name;
+        var image_url = data[i].image_url;
         this.user_templates.push({
-          template_id:template_id,
-          template_name:template_name,
-          template_image_url:template_image_url
+          id:id,
+          name:name,
+          image_url:image_url
         });         
       });
     }).catch(error => {

@@ -78,25 +78,23 @@ export default {
     saveJson() {
       var name = '';
       if(document.getElementById("canvasName") != null){
-        name = document.getElementById("canvasName").value;
-      }      
+        name = document.getElementById("inputCanvasName").value;
+      }
+
       if(this.saveType == "Save Image"){
         const dataUrl = this.canvas.editor.getJson();
-
-
-        dataUrl.template_id = uuid();
-        dataUrl.template_name = name;
-        dataUrl.template_image_url = this.canvas.editor.getImageUrl();
-
+        dataUrl.id = uuid();
+        dataUrl.name = name;
+        dataUrl.image_url = this.canvas.editor.getImageUrl();
         createUserTemp({data:dataUrl}).then((res)=>{
           alert(res.data);
         });
 
       }else{
         const dataUrl = this.canvas.editor.getJson();
-        dataUrl.template_id = this.param_id;
-        dataUrl.template_name = name;
-        dataUrl.template_image_url = this.canvas.editor.getImageUrl();     
+        dataUrl.id = this.param_id;
+        dataUrl.name = name;
+        dataUrl.image_url = this.canvas.editor.getImageUrl();     
 
         updateUserTemp(this.param_id,{data:dataUrl}).then((res)=>{
           alert(res.data)

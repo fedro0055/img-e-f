@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Loader :active="loaderActive" style="margin-left:40%;margin-top:200px"/>
+        <Loader :active="loaderActive" style="margin-left:40%;margin-top:200px" class=""/>
             <div class="row">
                 <div class="ivu-space-center row" >
                     <div class="ivu-space-item col-3" style="margin-left:10px">
@@ -84,28 +84,38 @@ export default {
     showPreview(){
             this.loaderActive = true;
             getShortTags().then((tags)=>{
-                getPreviewImage(this.keyword).then((res)=>{
-                    this.product_images = res.data;
-                }).then(()=>{
+                var a = getPreviewImage(this.keyword).then(async (res)=>{
+                    let promise = new Promise((resolve, reject) => {
+                        this.product_images = res.data;
+                        this.product_images.forEach((item,index)=>{
+                            var first_product_image =  item;
+                            if(first_product_image!=null){
+                                this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
+                            }
+                            if(index == this.product_images.length-1){
+                                return "done";
+                            }
+                        });                   
+                        // setTimeout(() => resolve("Promise resolved!"), 1000)
+                    });     
+                    let result = await promise;               
+                    return result;
 
-                    this.product_images.forEach(async (item,index)=>{
-                        var first_product_image =  item;
-                        if(first_product_image!=null){
-                            await this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
-                        }
-                    });
-
+                    // this.loaderActive = await false
                 });   
+                // a.then(()=>{
+                //     console.log("aaaaaaaa")
+                // }) 
+                setTimeout(() => {
+                    this.loaderActive = false
+                }, 7000);
             });
-            setTimeout(() => {
-            this.loaderActive = false;
-            }, 7000);
         },
 
     }
 };
 </script>
-<style scoped>
+<style scoped lang="less">
     .refresh-btn{
         color: #fff;
         border-color: #0053b8 !important;
@@ -115,7 +125,3 @@ export default {
     }
 
 </style>
-
-<script>
-
-</script>
