@@ -23,7 +23,7 @@ class EditorWorkspace {
 
   //Initialize the background
   _initBackground() {
-    if(this.canvas.backgroundColor == null){
+    if(this.canvas.backgroundColor == ''){
       this.canvas.setBackgroundColor({source: transParent, repeat: 'repeat'});    
     }
     this.canvas.backgroundImage = '';

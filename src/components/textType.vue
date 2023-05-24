@@ -290,7 +290,7 @@
               Fill
             </div>                
             <div  style="float:right">
-              <Switch size="small" v-model="fillState" true-color="#13ce66"/>
+              <Switch size="small" v-model="fillState" @on-change="changeFillState" true-color="#13ce66"/>
             </div>
           </div>   
         <div v-if="fillState" class="" style="align-items: center;margin-right:20px;">
@@ -370,9 +370,7 @@ import Color from './color.vue';
 import Align from './align.vue';
 import $ from "jquery";
 import {getShortTags} from "@/service/endpoint.js";
-import fontList from '@/assets/fonts/font';
 import OpenType from 'opentype.js';
-var initFontFamilyList = [];
 export default {
     mixins: [select],
     props:['mSelectOneTypeProps'],
@@ -653,13 +651,29 @@ export default {
             this.canvas.c.renderAll();
           }
         },      
+        changeFillState(value){
+
+          if(value == false){
+            const activeObject = this.canvas.c.getActiveObject();
+            activeObject._objects[0].set('fill','').setCoords();
+            this.fontAttr.rectFill = '';
+            this.canvas.c.renderAll();
+          }
+        } ,       
         changeBorderState(value){
           if(value == false){
-            const activeObject = this.canvas.c.getActiveObject()._objects[0];
-            activeObject.set('stroke','').setCoords();
-            activeObject.set('strokeWidth',0).setCoords();
+            const activeObject = this.canvas.c.getActiveObject();
+            activeObject._objects[0].set('stroke','').setCoords();
+            activeObject._objects[0].set('strokeWidth',0).setCoords();
             this.baseAttr.strokeWidth = 0;
             this.fontAttr.stroke = '';
+            activeObject._objects[0].set("width",activeObject.width);
+            activeObject._objects[0].set("height",activeObject.height);
+            //center text object
+            activeObject._objects[0].set({
+              left: 0 - (activeObject.width) / 2,
+              top: 0 - (activeObject.height) / 2,
+            });      
             this.canvas.c.renderAll();
           }
         },
@@ -818,12 +832,11 @@ export default {
 
         //<!---------------------- delete shortTag ---------------->
         textKeyPress(value){
-            var string = this.fontAttr.string
-            if(value.keyCode == 8){
-                string = string.slice(0,string.lastIndexOf('['));
-                this.changeString(string) 
-            }
-
+          var string = this.fontAttr.string
+          if(value.keyCode == 8){
+              string = string.slice(0,string.lastIndexOf('['));
+              this.changeString(string) 
+          }
         },
         //<!---------------------- delete shortTag ---------------->
 
@@ -911,14 +924,14 @@ export default {
             return;
           }      
           
-          if(key == "round"){
+          if(key === "round"){
             this.activeObject = this.canvas.c.getActiveObject()._objects[0];
             this.activeObject.set("ry", Number(evt.target.value)).setCoords();
             this.activeObject.set("rx", Number(evt.target.value)).setCoords();
             this.canvas.c.renderAll();
             return;
           }
-
+          
           if (key === 'strokeWidth') {
             var activeObject = this.canvas.c.getActiveObject()._objects[0];
             activeObject.set(key, Number(evt.target.value)).setCoords();
