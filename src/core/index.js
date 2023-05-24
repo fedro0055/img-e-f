@@ -38,6 +38,36 @@ class Editor extends EventEmitter {
       return type+"#"+(items.length);
     }
   }
+  getPosition(obj){
+    var positionX;
+    var positionY;
+    if(obj.position.positionX == "left"){
+      positionX = 0 - (obj.width) / 2;
+    }      
+    if(obj.position.positionX == "right"){
+      positionX = obj.width / 2 - obj._objects[1].width * obj._objects[1].scaleX;
+    }
+    if(obj.position.positionX == "xCenter"){
+      positionX = 0 - (obj._objects[1].width * obj._objects[1].scaleX) / 2;
+    }
+    if(obj.position.positionY == "yCenter"){
+      positionY = 0 - (obj._objects[1].height * obj._objects[1].scaleY) / 2;
+    }
+  
+    if(obj.position.positionY == "top"){
+      positionY = -(obj.height / 2);
+    }
+    if(obj.position.positionY == "bottom"){
+      positionY = obj.height / 2 - obj._objects[1].height * obj._objects[1].scaleY;
+    }
+  
+    
+    var position = {
+      left:positionX,
+      top:positionY
+    };
+    return position
+  }  
   getNameClone(name){
     var items = this.canvas.getObjects().filter(arg=>{
       if(arg.id != "workspace"){
@@ -170,7 +200,7 @@ class Editor extends EventEmitter {
   }
 
   getJson() {
-    return this.canvas.toJSON(['id',"nonBgImageState",'name','scaling','item_name','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
+    return this.canvas.toJSON(['id','nonBgImageState','ttf_base64','fontFamilyList','name','texthandle','scaling','item_name','position','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
   }
 
   /**
@@ -387,11 +417,11 @@ class Editor extends EventEmitter {
             var urlCreator = window.URL || window.webkitURL;
             var imageUrl = urlCreator.createObjectURL(blob);
             final_product_image.image_link = imageUrl;     
-          })          
-          
+          });          
             
         }
           await fabric.Image.fromURL(final_product_image.image_link, async (final_product_image) => {
+            
             if(productImage.nonBgImageState != true){
              final_product_image._element.crossOrigin = await 'anonymous';
             }
@@ -408,12 +438,14 @@ class Editor extends EventEmitter {
                   final_product_image.set("left",final_product_image.left/2+ final_product_image.width*final_product_image.scaleX).setCoords();
                   final_product_image.set("top",final_product_image.top/2).setCoords();                    
                 }else{
+
                   final_product_image.scaleToWidth(productImage.width*productImage.scaleX).setCoords();
                   //set position
                   var diffWidth = productImage.width*productImage.scaleX-final_product_image.width*final_product_image.scaleX;
                   var diffHeight = productImage.height*productImage.scaleY-final_product_image.height*final_product_image.scaleY; 
                   final_product_image.set("left",final_product_image.left-diffWidth/2).setCoords();
-                  final_product_image.set("top",final_product_image.top+diffHeight/2).setCoords();                                      
+                  final_product_image.set("top",final_product_image.top+diffHeight/2).setCoords();   
+
                 }
 
             canvasClone.remove(productImage); 

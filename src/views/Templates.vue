@@ -45,7 +45,7 @@ export default {
   name: 'Templates',
   data(){
     return{
-      user_templates:[]
+      user_templates:[],
     }
   },
   mounted() {
@@ -83,6 +83,7 @@ export default {
           console.log(error);
     });      
   },
+
 };
 </script>
 <style scoped>

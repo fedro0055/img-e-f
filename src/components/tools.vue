@@ -31,7 +31,6 @@ export default {
   created() {
     // line drawing
     this.drawHandler = initializeLineDrawing(this.canvas.c, defaultPosition);
-
     this.canvas.c.on('drop', (opt) => {
       // The distance of the canvas element from the left and top of the browser
       const offset = {
@@ -83,7 +82,6 @@ export default {
         fontSize: 20,
         id: uuid(),
       });
-
       text.set("width",text.width);
       var rect = new fabric.Rect({
           height: 0,
@@ -104,10 +102,29 @@ export default {
           startDate:'',
           endDate:''
         },
-
+        texthandle:"automatic",
+        fontFamilyList:[
+          {
+            name:"Arial",
+            ttf_base64:''
+          },
+          {
+            name:"Verdana",
+            ttf_base64:''
+          },
+          {
+            name:"Courier New",
+            ttf_base64:''
+          },
+          
+        ],
+        position:{
+          positionX:"left",
+          positionY:"top"
+        }
       });
       
-	    group.setCoords();	
+	    group.setCoords();
       this.canvas.c.add(group);
       rect.set("width",group.width*group.scaleX+5);
       rect.set("height",group.height*group.scaleY+5);

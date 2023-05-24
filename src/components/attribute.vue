@@ -153,7 +153,7 @@
           </div>
           <!-- emptypattern part -->
           <div>
-            <div class="" style="height:40px;margin-right:15px;">
+            <div v-if="baseAttr.id === 'productImage' || baseAttr.id === 'nonBgImage'" class="" style="height:40px;margin-right:15px;">
               <div style="float:left">
                 Remove white background
               </div>                
@@ -321,6 +321,7 @@ export default {
       isLock: false,
       isView:true,
       nonBgImageState:false,
+      imageStatus:'',
       // productImageState:"productImage", //emptyPatternState includes 'productImage' ,'trimImage',"nonproductImage" 
       // nonBgImageState:false,
       // trimImageState:false,  
@@ -420,8 +421,8 @@ export default {
       
 
       if (activeObject) {
-
         // base
+        this.baseAttr.id = activeObject.id;
         this.baseAttr.item_name = activeObject.item_name;
         this.baseAttr.round = activeObject.get('rx');
         this.baseAttr.height = activeObject.get('height');
@@ -453,6 +454,17 @@ export default {
           this.fontAttr.linethrough = activeObject.get('linethrough');
           this.fontAttr.charSpacing = activeObject.get('charSpacing');
           this.fontAttr.overline = activeObject.get('overline');
+          this.fontAttr.stroke = items[0]._objects[0].get('stroke');
+          this.fontAttr.round = items[0]._objects[0].get('ry');
+          this.fontAttr.fontFamilyList = items[0].fontFamilyList;
+          this.fontAttr.selected_text_manage_type = items[0].texthandle;
+          this.fontAttr.selected_fontfamily = items[0]._objects[1].fontFamily;       
+          this.fontAttr.selected_text_manage_type = items[0].texthandle;
+
+          if(this.fontAttr.stroke == null){
+            this.fontAttr.stroke = '';
+          }         
+
           this.fontAttr.fontStyle = activeObject.get('fontStyle');
           this.fontAttr.textBackgroundColor = activeObject.get('textBackgroundColor');
           this.fontAttr.fontWeight = activeObject.get('fontWeight');      

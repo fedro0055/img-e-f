@@ -137,12 +137,28 @@ export default {
     notMultiple() {
       return this.mSelectMode !== 'multiple';
     },
+    getPositionY(obj){
+      if(obj.position.positionY == undefined){
+        var positionY = 0 - (obj.width) / 2;
+      }else{
+        var positionY = obj.position.positionY;
+      }
+      return positionY;
+    },
+    getPositionX(obj){
+      if(obj.position.positionX == undefined){
+        var positionX = -(obj.height) / 2;
+      }else{
+        var positionX = obj.position.positionY;
+      }
+      return positionX;
+    },    
     // align left
     left() {
       const activeObject = this.canvas.c.getActiveObject();
       if (activeObject) {
         activeObject.forEachObject((item) => {
-          if(item.id != "virtural"){
+          if(item.type == "i-text"){
             item.set({
               left: -activeObject.width/2
             });            
@@ -150,6 +166,8 @@ export default {
           }
         });
       }
+            
+      activeObject.set('position',{positionX:"left",positionY:this.getPositionY(activeObject)});
     },
     // right align
     right() {
@@ -158,7 +176,7 @@ export default {
         const activeSelection = activeObject;
         const activeObjectLeft = activeObject.width / 2;
         activeSelection.forEachObject((item) => {
-          if(item.id != "virtural"){
+          if(item.type == "i-text"){
             item.set({
               left: activeObjectLeft - item.width * item.scaleX,
             });    
@@ -167,6 +185,7 @@ export default {
           }          
         });
       }      
+      activeObject.set('position',{positionX:"right",positionY:this.getPositionY(activeObject)});
     },
     // horizontal center alignment
     xcenter() {
@@ -174,7 +193,7 @@ export default {
       if (activeObject) {
         const activeSelection = activeObject;
         activeSelection.forEachObject((item) => {
-          if(item.id != "virtural"){
+          if(item.type == "i-text"){
             item.set({
               left: 0 - (item.width * item.scaleX) / 2,
             });
@@ -184,6 +203,7 @@ export default {
 
         });
       }
+      activeObject.set('position',{positionX:"xCenter",positionY:this.getPositionY(activeObject)});
     },
     // vertical center alignment
     ycenter() {
@@ -191,13 +211,16 @@ export default {
       if (activeObject) {
         const activeSelection = activeObject;
         activeSelection.forEachObject((item) => {
-          item.set({
-            top: 0 - (item.height * item.scaleY) / 2,
-          });
-          item.setCoords();
-          this.canvas.c.renderAll();
+          if(item.type == "i-text"){
+            item.set({
+              top: 0 - (item.height * item.scaleY) / 2,
+            });
+            item.setCoords();
+            this.canvas.c.renderAll();
+          }          
         });
       }
+      activeObject.set('position',{positionX:this.getPositionX(activeObject),positionY:"yCenter"});
     },
     // align top
     top() {
@@ -206,7 +229,7 @@ export default {
         const activeSelection = activeObject;
         const activeObjectTop = -(activeObject.height / 2);
         activeSelection.forEachObject((item) => {
-          if(item.id != "virtural"){
+          if(item.type == "i-text"){
             item.set({
               top: activeObjectTop,
             });
@@ -215,6 +238,7 @@ export default {
           }
         });
       }      
+      activeObject.set('position',{positionX:this.getPositionX(activeObject),positionY:"top"});
     },
     // Bottom alignment
     bottom() {
@@ -223,7 +247,7 @@ export default {
         const activeSelection = activeObject;
         const activeObjectTop = activeObject.height / 2;
         activeSelection.forEachObject((item) => {
-          if(item.id != "virtural"){
+          if(item.type == "i-text"){
             item.set({
               top: activeObjectTop - item.height * item.scaleY,
             });
@@ -232,6 +256,7 @@ export default {
           }
         });
       }      
+      activeObject.set('position',{positionX:this.getPositionX(activeObject),positionY:"bottom"});
     },
     // horizontal average alignment
     xequation() {

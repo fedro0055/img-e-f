@@ -135,12 +135,7 @@ export default {
     },
     setSize() {
       this.canvas.c.discardActiveObject();
-      this.$Spin.show();      
       this.canvas.editor.editorWorkspace.setSize(Number(this.width), Number(this.height));
-      setTimeout(() => {
-        this.$Spin.hide();      
-        
-      }, 500);
     },    
     changeSelect(evt){
       var resolution = evt.split("x");

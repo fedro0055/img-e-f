@@ -88,35 +88,7 @@ function initControlsRotate(canvas) {
         break;
     } // Set the four-corner rotation cursor
   });
-  canvas.on("object:scaling",(event)=>{
-    if(event.target.customType == "text"){
-      var obj = event.target,
-      w = obj.width * obj.scaleX,
-      h = obj.height * obj.scaleY,
-      s = obj.strokeWidth;
-
-      obj.set({
-          'height'     : h,
-          'width'      : w,
-          'scaleX'     : 1,
-          'scaleY'     : 1,
-      });
-
-      obj._objects[0].set({
-          'height'     : h,
-          'width'      : w,
-          'scaleX'     : 1,
-          'scaleY'     : 1,
-          "left":0 - (obj.width) / 2,
-          "top":0 - (obj.height) / 2
-      });
-
-      obj._objects[1].set({
-        "left":0 - (obj.width) / 2,
-        "top":0 - (obj.height) / 2,
-      }); 
-    }
-  })
+  
 }
 
 export default initControlsRotate;

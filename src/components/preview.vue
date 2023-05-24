@@ -37,7 +37,7 @@
                     >
                     <div class="row">
                         <div class="col-10">
-                            <div class="font-s">{{item.brand}}</div>
+                            <div class="font-s">{{item.name}}</div>
                         </div>
 
                     </div>
@@ -88,7 +88,7 @@ export default {
                     let promise = new Promise((resolve, reject) => {
                         this.product_images = res.data;
                         this.product_images.forEach((item,index)=>{
-                            var first_product_image =  item;
+                            var first_product_image = item;
                             if(first_product_image!=null){
                                 this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
                             }
@@ -103,9 +103,7 @@ export default {
 
                     // this.loaderActive = await false
                 });   
-                // a.then(()=>{
-                //     console.log("aaaaaaaa")
-                // }) 
+
                 setTimeout(() => {
                     this.loaderActive = false
                 }, 7000);

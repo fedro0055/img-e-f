@@ -267,6 +267,7 @@ function initControls(canvas) {
    
   });
   
+    
   fabric.Arrow.fromObject = function(object, callback) {
       return fabric.Object._fromObject('Arrow', object, callback);
     };  

@@ -23,7 +23,9 @@ class EditorWorkspace {
 
   //Initialize the background
   _initBackground() {
-    this.canvas.setBackgroundColor({source: transParent, repeat: 'repeat'});    
+    if(this.canvas.backgroundColor == null){
+      this.canvas.setBackgroundColor({source: transParent, repeat: 'repeat'});    
+    }
     this.canvas.backgroundImage = '';
     this.canvas.setWidth(this.workspaceEl.offsetWidth);
     this.canvas.setHeight(this.workspaceEl.offsetHeight);
@@ -33,8 +35,7 @@ class EditorWorkspace {
   }
 
   setSize(width, height) {
-    // this._initBackground();
-
+    this._initBackground();
     this.option.width = width;
     this.option.height = height;
     // //reset workspace
@@ -58,7 +59,6 @@ class EditorWorkspace {
       fill: '',
       width,
       height,
-      
       id: 'workspace',
     });
     workspace.set('selectable', false);

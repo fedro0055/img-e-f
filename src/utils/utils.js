@@ -6,6 +6,7 @@ import FontFaceObserver from 'fontfaceobserver';
  * @param {Blob|File} file
  * @return {String}
  */
+
 export function getImgStr(file) {
   return new Promise((resolve, reject) => {
     try {
@@ -39,7 +40,7 @@ export function downFontByJSON(str) {
     const font = new FontFaceObserver(fontName);
     return font.load(null, 150000);
   });
-  return Promise.all(fontFamilysAll);
+    return Promise.all(fontFamilysAll);
 }
 
 

@@ -18,7 +18,6 @@
         <Modal
           v-model="modal"
           title="Change Name"
-          :on-ok="saveName"
           >
           <div class="row">
             <label class="col-md-3">Name</label>
@@ -40,7 +39,7 @@
     <div>
 
 
-      <Content style="display: flex; height: calc(100vh - 64px);">
+      <Content style="display: flex; height: calc(100vh - 64px);" id="content">
         <!-- <loader class="child" :active="true"></loader> -->
         
         <!-- --------------------------------- Import Button(+) ----------------------------------- -->
@@ -70,7 +69,7 @@
             </div>
 
             <!-- --------------------------------- Main Content ----------------------------------- -->
-            <canvas id="canvas" :class="ruler ? 'design-stage-grid' : ''"></canvas>
+            <canvas id="canvas"></canvas>
             <!-- --------------------------------- End Main Content ----------------------------------- -->
 
             <!-- --------------------------------- Footer ----------------------------------- -->
@@ -114,7 +113,6 @@ import attribute from '@/components/attribute.vue';
 import EventHandle from '@/utils/eventHandler';
 import loader from "@/components/loader.vue"
 import "@/assets/css/main.css"
-
 import { fabric } from 'fabric';
 import Editor from '@/core';
 import $ from "jquery";
@@ -196,13 +194,24 @@ export default {
           this.canvas.discardActiveObject();          
         }
       });      
+      // get references to the window object and the element you want to track
+      const windowObj = window;
+      const element = document.getElementById('content');
+
+      // define a function to handle the resize event
+
+
+      windowObj.addEventListener('resize', this.handleResize);
+      // call the handler once to get the initial width and height values
+      this.handleResize(this);      
     },1000);
 
 
   },
   methods:{
-    saveName(){
-    }
+      handleResize() {
+        canvas.editor.editorWorkspace.setSize(900,900);    
+      }
   }
   
 };

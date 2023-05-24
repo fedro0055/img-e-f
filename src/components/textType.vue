@@ -4,11 +4,9 @@
         <!-- control part -->
         <div class="control" style="margin-left:15px">
           <div class="row mt-3 mb-3" style="align-items: center;">
-
             <div class="col col-lg-7">
               Size
             </div>
-            
             <div class="input-size">
               <div class="content">
                 <div class="ivu-input-wrapper ivu-input-wrapper-default ivu-input-type-text">
@@ -99,7 +97,7 @@
           <label>Text</label>
           <Input v-model="this.fontAttr.string" @on-change="(value) =>changeString(value)" @on-keyup="(value) =>textKeyPress(value)" class="mb-2 mt-2" style="width:98%;">
             <template #append>
-              <Select style="width:70px" @on-change="changeAddTag" v-model="shortTag" size="small">
+              <Select style="width:70px" @on-change="changeAddTag" size="small">
                 <Option v-for="tag in tags" :value="'['+tag+']'" :key="tag"></Option>
               </Select>
             </template>
@@ -112,9 +110,9 @@
           <!-- -------------------  text handling  ---------------- -->
           <div class="row" style="">
             <div class="col-8" >
-            <Select @on-change="changeFontFamily">
-                <Option v-for="item in fontFamilyList" :value="item"  :key="'font-' + item">{{ item }}</Option>
-            </Select>              
+              <b-form-select class="mb-3" v-model="fontAttr.selected_fontfamily" @change="changeFontFamily" size="sm">
+                <option v-for="item in fontAttr.fontFamilyList" :value="item.name"  :key="item.name">{{ item.name }}</option>
+              </b-form-select>                
             </div>
             <div class="col-3" style="">
               <Button class="ivu-btn ivu-btn-text" @click="uploadFontClick">
@@ -208,12 +206,12 @@
               Long text handling
             </div>  
             <div class="col-4" style="margin: 0;">
-              <b-form-select class="mb-3" v-model="selected_text_manage_type" @change="handleLongText" size="sm">
+              <b-form-select class="mb-3" v-model="fontAttr.selected_text_manage_type" @change="changeHandleLongText" size="sm">
                 <option value="automatic" selected>Automatic font size</option>
                 <option value="shorten">Shorten text</option>                
               </b-form-select>     
 <!-- 
-              <Select @on-change="handleLongText">
+              <Select @on-change="changeHandleLongText">
                 <Option value="automatic" selected>Automatic font size</Option>
                 <Option value="shorten">Shorten text</Option>
               </Select> -->
@@ -234,7 +232,7 @@
           <!-- -------------------  End Text alignment  ---------------- --> 
           
           <!-- -------------------  Text padding  ---------------- -->
-          <div class="mt-3 row">
+          <!-- <div class="mt-3 row">
             <div style="width:78%">
               Text padding
             </div>  
@@ -242,7 +240,6 @@
               <div class="ivu-input-wrapper ivu-input-wrapper-default ivu-input-type-text">
                 <span class="ivu-input-suffix">
                   <i style="font-style: normal; font-size: 11px;">px</i>
-                <!-- Pixel -->
                 </span>
                 <input
                   type="number" 
@@ -254,7 +251,7 @@
                 />
               </div>
             </div>   
-          </div>
+          </div> -->
           <!-- -------------------  End Text padding  ---------------- -->
         </div>
         <!-- -------------------  End Text Setting  ---------------- -->
@@ -275,7 +272,7 @@
                 autocomplete="off" 
                 type="number" 
                 class="ivu-input ivu-input-default ivu-input-with-suffix" 
-                v-model="baseAttr.angle"
+                v-model="fontAttr.round"
                 :max="80"
                 @change="(value)=>changeCommon('round', value)"
               />
@@ -304,12 +301,7 @@
             <div class="input-size" style="float:right;width:40%">
               <Color style="width:100%;padding:0" :color="fontAttr.rectFill" @change="(value) => changeSelectFillType('colorFilter', value)"></Color>
             </div>
-          </div>  
-          <!-- <div class="col-6">
-            <Select @on-change="(value) => changeSelectFillType('textFilter', value)">
-              <Option  v-for="item in fillType" :value="item" :key="'fill-' + item">{{ item }}</Option>
-            </Select>
-          </div> -->                                                 
+          </div>                                                
         </div>                    
         </div>
         <!-- -------------------  End Fill  ---------------- -->
@@ -327,11 +319,11 @@
           <div v-if="borderState">
             <div style="height:40px;margin-right:15px;">
               <div style="float:left;width:40%;">
-                <Color :color="fontAttr.rectFill" @change="(value)=>changeCommon('stroke', value)" style="padding:0"></Color>
+                <Color :color="fontAttr.stroke" @change="(value)=>changeCommon('stroke', value)" style="padding:0"></Color>
               </div>                        
               <div style="float:right;width:40%;">
                 
-                <Select v-model="baseAttr.strokeDashArray" @on-change="borderSet">
+                <Select v-model="baseAttr.strokeDashArray" @on-change="changeBorderWidth">
                   <Option
                     v-for="item in strokeDashList"
                     :value="item.label"
@@ -340,7 +332,8 @@
                   >
                     {{ item.label }}
                   </Option>
-                </Select>              
+                </Select> 
+
               </div>
             </div>     
             <div class="mt-4 row" style="align-items: center;margin-right:5px;"> 
@@ -377,9 +370,9 @@ import Color from './color.vue';
 import Align from './align.vue';
 import $ from "jquery";
 import {getShortTags} from "@/service/endpoint.js";
+import fontList from '@/assets/fonts/font';
 import OpenType from 'opentype.js';
-import FontFaceObserver from 'fontfaceobserver';
-
+var initFontFamilyList = [];
 export default {
     mixins: [select],
     props:['mSelectOneTypeProps'],
@@ -389,9 +382,9 @@ export default {
     },  
     data(){
         return{
-          selected_text_manage_type:'automatic',
+          fontAttr:{selected_text_manage_type:'automatic'},
+          fontAttr:{selected_fontfamily:''},
           showModeText:'',
-          shortTag:"ppppppp",
           activeObject:'',
           borderState:false,
           fillState:false,
@@ -404,8 +397,7 @@ export default {
           baseAttr: this.mSelectOneTypeProps[1],
           strokeDashArray: [],
           tags:'',
-          // font properties
-          fontFamilyList: ["Arial","Helvetica","Myriad Pro","Delicious","Verdana","Georgia","Hoefler Text","Courier", "Comic Sans MS" ,"Impact" ,"Monaco" ,"Optima"],
+          //
           fillType: [
               'normal',
               'multiply',
@@ -505,23 +497,36 @@ export default {
         this.baseAttr.top = this.canvas.c.getActiveObject().top;
         this.baseAttr.left =this.canvas.c.getActiveObject().left;
         if(this.canvas.c.getActiveObject().customType == "text"){
-          this.hiddenOutArea(this.canvas.c.getActiveObject())
+          if(this.fontAttr.selected_text_manage_type == "automatic"){
+            this.showOutArea(this.canvas.c.getActiveObject());
+          }else{
+            this.hiddenOutArea(this.canvas.c.getActiveObject());
+          }
         }
+        // this.fixTextPosition();
       });
+      this.canvas.c.on("object:scaling",(event)=>{
+        this.fixTextPosition()
+      })
 
       this.canvas.c.on("object:modified",(e)=>{
         this.baseAttr.width = this.canvas.c.getActiveObject().width;
         this.baseAttr.height =this.canvas.c.getActiveObject().height;
         if(this.canvas.c.getActiveObject().customType == "text"){
-          this.hiddenOutArea(this.canvas.c.getActiveObject())
+          if(this.fontAttr.selected_text_manage_type == "automatic"){
+            this.showOutArea(this.canvas.c.getActiveObject());
+          }else{
+            this.hiddenOutArea(this.canvas.c.getActiveObject());
+          }
         }
-        
+        // this.fixTextPosition();
       });   
 
       this.event.on('selectOne', (e) => {
         if(e[0].type == "group"){
           const activeObject = e[0]._objects[1];
           this.activeObject = activeObject;
+          this.fontAttr.string = activeObject.get('text');
           this.fontAttr.string = activeObject.get('text');
           this.fontAttr.fontSize = activeObject.get('fontSize');
           this.fontAttr.fontFamily = activeObject.get('fontFamily');
@@ -534,6 +539,19 @@ export default {
           this.fontAttr.fontStyle = activeObject.get('fontStyle');
           this.fontAttr.textBackgroundColor = activeObject.get('textBackgroundColor');
           this.fontAttr.fontWeight = activeObject.get('fontWeight');
+          this.fontAttr.stroke = e[0]._objects[0].get('stroke');
+          this.fontAttr.round = e[0]._objects[0].get('ry');
+          this.fontAttr.strokeWidth = e[0]._objects[0].get('strokeWidth');
+          this.fontAttr.selected_text_manage_type = e[0].texthandle;
+          if(this.fontAttr.selected_text_manage_type == undefined){
+            this.fontAttr.selected_text_manage_type = "automatic";
+          }
+          this.fontAttr.selected_fontfamily = e[0]._objects[1].fontFamily;
+          this.fontAttr.fontFamilyList = e[0].fontFamilyList;
+
+          if(this.fontAttr.stroke == null){
+            this.fontAttr.stroke = ''
+          }
         }
             
         });
@@ -547,29 +565,8 @@ export default {
       });     
     },
 
-    methods:{
-        //stroke boder set
-        borderSet(key) {
-          const activeObject = this.canvas.c.getActiveObject()._objects[0];
-          if (activeObject) {
-            const stroke = this.strokeDashList.find((item) => item.label === key);
-            activeObject.set(stroke.value).setCoords();
-            this.canvas.c.renderAll();
-          }
-        },      
-
-        changeBorderState(value){
-
-          if(value == false){
-            const activeObject = this.canvas.c.getActiveObject()._objects[0];
-            activeObject.set('stroke','').setCoords();
-            activeObject.set('strokeWidth',0).setCoords();
-            this.baseAttr.strokeWidth = 0;
-            this.baseAttr.stroke = '';
-            this.canvas.c.renderAll();
-          }
-
-        },
+    methods:{      
+        //<! ----------------   initialize saved settings.   ---------------->
         initSet(){
           var activeObject = this.canvas.c.getActiveObject();
           if(activeObject != null){
@@ -585,127 +582,141 @@ export default {
               // <---------border of rect setting ---------->
               if(activeObject._objects[0].stroke != ''){
                 this.borderState = true;
-                this.baseAttr.stroke = activeObject._objects[0].stroke;
               }
 
               if(activeObject._objects[0].strokeWidth != 0){
                 this.borderState = true;
                 this.baseAttr.strokeWidth = activeObject._objects[0].strokeWidth;
-              }            
+              }  
               // <---------border of rect setting ---------->
             }
           }
-          
         },
-
+        //<! ----------------   initialize saved settings.   ---------------->
+        //<!--------------- set this.baseAttr.width and height depending on current TextObject's size 
         reSetObj(){
           const activeObject = this.canvas.c.getActiveObject();
           this.baseAttr.width = activeObject.width;
           this.baseAttr.height = activeObject.height;
           this.baseAttr.left = activeObject.left;
           this.baseAttr.top = activeObject.top;
-        },
-
-        // <!----------- control box size   -------->
-        checkTextboxSize(){
+        },         
+        //<!--------------- set this.baseAttr.width and height depending on current TextObject's size 
+        
+        //<!--------------- when textobjectbox's size increase ad decrease, text position and size fix    ---------------->
+        fixTextPosition(){
           const activeObject = this.canvas.c.getActiveObject();
-          if(activeObject){
-            if(activeObject.type == "group"){
-              if(activeObject.width<activeObject._objects[1].width){
-                activeObject.set("width",activeObject._objects[1].width).setCoords();
-                activeObject._objects[0].set("width",activeObject._objects[1].width).setCoords();
-                activeObject._objects[0].set("left",-(activeObject._objects[1].width/2)).setCoords();
-                activeObject.set("width",activeObject._objects[1].width).setCoords();
-                activeObject._objects[1].set("left",-activeObject._objects[1].width/2).setCoords();
-                this.canvas.c.renderAll();
-                this.reSetObj();
-                return;
-              }
-              if(activeObject.height<activeObject._objects[1].height){
-                activeObject.set("height",activeObject._objects[1].height).setCoords();
-                activeObject._objects[1].set("top",-activeObject._objects[1].height/2).setCoords();
-                this.canvas.c.renderAll();
-                return;
-              }              
-            }
+          if(activeObject.customType == "text"){
+            var obj = activeObject,
+            w = obj.width * obj.scaleX,
+            h = obj.height * obj.scaleY
+
+            obj.set({
+                'height'     : h,
+                'width'      : w,
+                'scaleX'     : 1,
+                'scaleY'     : 1,
+            });
+
+            obj._objects[0].set({
+                'height'     : h,
+                'width'      : w,
+                'scaleX'     : 1,
+                'scaleY'     : 1,
+                "left":0 - (obj.width) / 2,
+                "top":0 - (obj.height) / 2
+            });
+
+            var position = this.canvas.editor.getPosition(obj);
+
+            obj._objects[1].set({
+              "left":position.left,
+              "top":position.top,
+            });
+
+            //center text object
+            activeObject._objects[0].set({
+              left: 0 - (activeObject.width) / 2-Number(this.fontAttr.strokeWidth)/2,
+              top: 0 - (activeObject.height) / 2-Number(this.fontAttr.strokeWidth)/2,
+            });            
+          }    
+
+
+        },
+        //<!--------------- when textobjectbox's size increase ad decrease, text position and size fix    ---------------->
+        //<!---------------- stroke boder set ------------>
+        changeBorderWidth(key) {
+          const activeObject = this.canvas.c.getActiveObject()._objects[0];
+          if (activeObject) {
+            const stroke = this.strokeDashList.find((item) => item.label === key);
+            activeObject.set(stroke.value).setCoords();
+            this.canvas.c.renderAll();
           }
         },      
+        changeBorderState(value){
+          if(value == false){
+            const activeObject = this.canvas.c.getActiveObject()._objects[0];
+            activeObject.set('stroke','').setCoords();
+            activeObject.set('strokeWidth',0).setCoords();
+            this.baseAttr.strokeWidth = 0;
+            this.fontAttr.stroke = '';
+            this.canvas.c.renderAll();
+          }
+        },
+        //<!---------------- stroke boder set ------------>
 
+        //<!--------------------- add tag ------------------->
+        changeAddTag(value){
+          this.changeString(this.fontAttr.string+value);
+        },        
+        //<!--------------------- add tag ------------------->
+        //<!----------------------------  upload font   --------------------->
         uploadFontClick(){
-          console.log("asdf");
-          $("#uploadFont").click();
-        },
-        saveAs(buffer, filename) {
-          const blob = new Blob([buffer]);
-          const objectUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = objectUrl;
-          link.download = filename;
-          link.click();
-          URL.revokeObjectURL(objectUrl);
-        },
-        uploadFont(e){
-          const reader = new FileReader();
 
-          reader.addEventListener('load', () => {
+          $("#uploadFont").click();
+
+        },
+
+        uploadFont(e){
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = () => {
+            const activeObject = this.canvas.c.getActiveObject()._objects[1];
             const fontBuffer = reader.result;
             const font = OpenType.parse(fontBuffer);
+            var fontName = font.names.fontFamily.en;            
+            this.fontFace = new FontFace(fontName, fontBuffer);
+            document.fonts.add(this.fontFace);
+            activeObject.set("fontFamily",fontName);
+            if (this.fontAttr.fontFamilyList.includes(fontName)) {
 
-            var fontName = font.names.fontFamily.en;
-
-            // const font = new FontFaceObserver(fontName);
-            const activeObject = this.canvas.c.getActiveObject()._objects[1];
-            if (this.fontFamilyList.includes(fontName)) {
               activeObject && activeObject.set('fontFamily', fontName).setCoords();
               setTimeout(()=>{
                 this.canvas.c.renderAll();
               },300);
-              return;
 
             }else{
-              this.fontFamilyList.push(fontName);
+
+              this.fontAttr.fontFamilyList.push({
+                name:fontName,
+                ttf_base64:''
+              });
+
               activeObject && activeObject.set('fontFamily', fontName).setCoords();
+              this.canvas.c.getActiveObject().set('fontFamilyList', this.fontAttr.fontFamilyList)
               setTimeout(()=>{
                 this.canvas.c.renderAll();
               },300);
-              return;    
-            }
-            // const font = new FontFaceObserver(fontName);
-            // const style = document.createElement('style');            
-            // font.load().then(() => {
-            //   style.innerHTML = `@font-face {
-            //     font-family: '${this.fontName}';
-            //     src: url('${this.fontUrl}');
-            //   }`;
-            // console.log(style)
-            //   document.head.appendChild(style);
-            //   // this.$emit('font-loaded');
-            // });            
-            // font.names.fontFamily = 'My New Font';
-            // font.names.fontSubfamily = 'Regular';
-            // font.unitsPerEm = 1000;
-            // font.ascender = 800;
-            // font.descender = -200;
-            // font.glyphs.push(new OpenType.Glyph({
-            //   name: 'A',
-            //   unicode: 65,
-            //   advanceWidth: 600,
-            //   path: new OpenType.Path()
-            // }));      
 
-            // const newFontBuffer = font.toArrayBuffer();
-            // console.log(newFontBuffer)
-
-          });
-
-          reader.readAsArrayBuffer(e.target.files[0]);    
-
-          
-
+            }            
+            this.fontAttr.selected_fontfamily = fontName;
+          };
+          reader.readAsArrayBuffer(file);      
         },
+        //<!----------------------------  upload font   --------------------->
         // <!----------- control box size   -------->
         changeSelectFillType(key,value){
-          
 
           if(key == "colorFilter"){
             const activeObject = this.canvas.c.getActiveObject()._objects[0];
@@ -713,62 +724,47 @@ export default {
             this.canvas.c.renderAll();
           }
 
-          if(key == "textFilter"){
+          // if(key == "textFilter"){
 
-            var filter = new fabric.Image.filters.BlendColor({
-              color: '#c9f364',
-              mode: 'multiply'
-            });
+          //   var filter = new fabric.Image.filters.BlendColor({
+          //     color: '#c9f364',
+          //     mode: 'multiply'
+          //   });
 
-            var a = this.canvas.c.getActiveObject();
-            a.filters = [];
-            a.filters.push(filter);
+          //   var a = this.canvas.c.getActiveObject();
+          //   a.filters = [];
+          //   a.filters.push(filter);
 
-          }
+          // }
 
         },        
-        showBorder(){
-            this.borderState ? this.borderState = false : this.borderState = true
-        },
-        showTextFill(){
-            this.showState ? this.showState = false : this.showState = true
-        },
-        showTextBorder() {
-            this.textBorderState ? this.textBorderState = false : this.textBorderState = true
-        },        
-        handleLongText(evt){
+        // <!----------- control box size   -------->
+        //<!---------------- handle long text -------------->
+        changeHandleLongText(evt){
+
           var activeObject = this.canvas.c.getActiveObject()._objects[1];
-          var string = this.fontAttr.string;
             if(evt == 'automatic'){
-              this.selected_text_manage_type = "automatic";
-              if(150 >=string.length && string.length >= 50){
-                activeObject.set("fontSize",16).setCoords();
-                this.canvas.c.renderAll();
-                return;
-              }
-              if(250>=string.length&&string.length >= 150){
-                activeObject.set("fontSize",10).setCoords();
-                this.canvas.c.renderAll();
-                return;
-              }
-              if(350>=string.length&&string.length >= 250){
-                activeObject.set("fontSize",8);
-                this.canvas.c.renderAll();
-                return;
-              }
-            }else{
-              console.log("aaaaaaaa");
-              // console.log(this.fontAttr.fontSize);
-              activeObject.set("fontSize",this.fontAttr.fontSize).setCoords();
-              this.selected_text_manage_type = "shorten";
 
+              this.fontAttr.selected_text_manage_type = "automatic";
+              this.canvas.c.getActiveObject().set("texthandle",this.fontAttr.selected_text_manage_type);
+              this.showOutArea(this.canvas.c.getActiveObject());
+
+            }else{
+
+              activeObject.set("fontSize",this.fontAttr.fontSize).setCoords();
+              this.fontAttr.selected_text_manage_type = "shorten";
+              this.canvas.c.getActiveObject().set("texthandle",this.fontAttr.selected_text_manage_type);
               activeObject.set("fontSize",activeObject.fontSize).setCoords();
+              activeObject.set("scaleX",1);
+              activeObject.set("scaleY",1);
+              this.hiddenOutArea(this.canvas.c.getActiveObject());
+
             }
             this.canvas.c.renderAll();
         },
-        changeAddTag(value){
-            this.changeString(this.fontAttr.string+value);
-        },        
+        //<!---------------- handle long text -------------->
+
+        //<!---------------- change text font setting --------------->
         // bold
         changeFontWeight(key, value) {
             const nValue = value === 'normal' ? 'bold' : 'normal';
@@ -797,17 +793,14 @@ export default {
             this.canvas.c.getActiveObject()._objects[1].set(key, nValue).setCoords();
             this.canvas.c.renderAll();
         },        
-        //delete shortTag
-        textKeyPress(value){
-            var string = this.fontAttr.string
-            if(value.keyCode == 8){
-                string = string.slice(0,string.lastIndexOf('['));
-                this.changeString(string) 
-            }
+        // modify font family
+        changeFontFamily(fontName) {
+          if (!fontName) return;
+          this.canvas.c.getActiveObject()._objects[1].set("fontFamily",fontName).setCoords();
+          this.canvas.c.renderAll();
 
-        },
-
-        //change string
+        },          
+        // change string
         changeString(value){
 
             if(typeof(value)=="string"){
@@ -817,20 +810,22 @@ export default {
             }
 
             this.fontAttr.string = string;
-
-            this.changeCommon('text',string);
-            this.handleLongText(this.selected_text_manage_type)
+            this.canvas.c.getActiveObject()._objects[1].set("text", string).setCoords();
+            this.changeHandleLongText(this.fontAttr.selected_text_manage_type);
 
         },
-        
-        // modify font
-        changeFontFamily(fontName) {
-          console.log("")
-          if (!fontName) return;
-          this.canvas.c.getActiveObject()._objects[1].set("fontFamily",fontName).setCoords();
-          this.canvas.c.renderAll();
+        //<!---------------- change text font setting --------------->
 
-        },   
+        //<!---------------------- delete shortTag ---------------->
+        textKeyPress(value){
+            var string = this.fontAttr.string
+            if(value.keyCode == 8){
+                string = string.slice(0,string.lastIndexOf('['));
+                this.changeString(string) 
+            }
+
+        },
+        //<!---------------------- delete shortTag ---------------->
 
         //change activeObject
         changeCommon(key,evt){
@@ -838,31 +833,49 @@ export default {
 
             this.activeObject = this.canvas.c.getActiveObject();
             this.changeProperty(key,evt);
+            this.fixTextPosition();
             return;
 
           }else if(key=="stroke" || key=="strokeWidth" || key=="fill"){
 
             this.activeObject = this.canvas.c.getActiveObject()._objects[0];
             this.changeProperty(key,evt);
+            this.fixTextPosition();
             return;
 
           }else{
 
             this.activeObject = this.canvas.c.getActiveObject()._objects[1]
             this.changeProperty(key,evt);
+            this.fixTextPosition();
             return;   
 
           }
         },
+
         showOutArea(activeObject){
-          activeObject._objects[1].set("scaleX",activeObject.width/activeObject._objects[1].width).setCoords();
-          activeObject._objects[1].set("scaleY",activeObject.width/activeObject._objects[1].width).setCoords();
-          activeObject._objects[0].set("width",activeObject.width).setCoords();
-          activeObject._objects[1].set("width",activeObject.width).setCoords();
-          this.canvas.c.renderAll();
+          if(activeObject.width<activeObject._objects[1].width){
+            var position = this.canvas.editor.getPosition(activeObject);
+
+            if(Number.isInteger(position.left) == true){
+              var diff = (activeObject.width) / 2 - position.left; 
+            }else{
+              var diff = (activeObject.width) / 2 + position.left; 
+            }
+
+            activeObject._objects[1].set("scaleX",activeObject.width/(activeObject._objects[1].width-diff/2)).setCoords();
+            activeObject._objects[1].set("scaleY",activeObject.width/(activeObject._objects[1].width-diff/2)).setCoords();
+            activeObject._objects[0].set("width",activeObject.width-diff/2).setCoords();
+            activeObject._objects[1].set("width",activeObject.width-diff/2).setCoords();
+            activeObject._objects[1].clipPath = '';
+            this.canvas.c.renderAll();
+
+          }
         },
+
         hiddenOutArea(activeObject){
-          
+
+          var textObject = activeObject._objects[1];
           var clipRect = new fabric.Rect({
             originX: 'left',
             originY: 'top',
@@ -873,90 +886,82 @@ export default {
             angle:activeObject.angle,
             absolutePositioned: true,
           });     
-          
-          activeObject.clipPath = clipRect;
-          this.canvas.c.renderAll();                  
-                
+
+          textObject.clipPath = clipRect;
+          this.canvas.c.renderAll();  
+
         },
         //change property
         changeProperty(key, evt) {
 
           if (key === 'width'|| key === 'height'||key === 'left'|| key === 'top') {
-
             this.activeObject.set(key, Number(evt.target.value));
             this.activeObject._objects[0].set("width",this.activeObject.width).setCoords();
             this.activeObject._objects[0].set("left",-(this.activeObject.width/2)).setCoords();    
             this.activeObject._objects[0].set("height",this.activeObject.height).setCoords();              
             this.activeObject._objects[0].set("top",-(this.activeObject.height / 2)).setCoords();
             this.canvas.c.requestRenderAll();
-            this.reSetObj();
             return;
-
           }       
           
           if (key === 'stroke') {
             this.activeObject.set(key, evt);
+            this.fontAttr.stroke = evt;
             this.canvas.c.renderAll();
             return;
           }      
-
-          if (key === 'strokeWidth') {
-            this.activeObject.set(key, Number(evt.target.value));
-            const activeObject = this.canvas.c.getActiveObject();
-            this.activeObject.set({
-              left: 0 - (activeObject.width) / 2-Number(evt.target.value)/2,
-              top: 0 - (activeObject.height) / 2-Number(evt.target.value)/2,
-            })
+          
+          if(key == "round"){
+            this.activeObject = this.canvas.c.getActiveObject()._objects[0];
+            this.activeObject.set("ry", Number(evt.target.value)).setCoords();
+            this.activeObject.set("rx", Number(evt.target.value)).setCoords();
             this.canvas.c.renderAll();
             return;
-          }           
+          }
+
+          if (key === 'strokeWidth') {
+            var activeObject = this.canvas.c.getActiveObject()._objects[0];
+            activeObject.set(key, Number(evt.target.value)).setCoords();
+            this.fontAttr.strokeWidth = Number(evt.target.value);
+            this.canvas.c.renderAll();
+            return;
+          }
 
           // control rect's size and group's size depending on padding value
-          if (key === 'padding') {
+          if (key === "padding") {
             var rect = this.canvas.c.getActiveObject()._objects[0];
             //
             if(!this.activeObject.tempValueForPadding){
               this.activeObject.tempValueForPadding = evt.target.value;
             }
             if(this.activeObject.tempValueForPadding<evt.target.value){
-              
-              rect.set("width",Number(this.activeObject.width)+ Number(evt.target.value)*2).setCoords();
-              rect.set("height",Number(this.activeObject.height) + Number(evt.target.value)*2).setCoords();
-              this.activeObject.set("width",Number(this.activeObject.width) + Number(evt.target.value)*2).setCoords();
-              this.activeObject.set("height",Number(this.activeObject.height) + Number(evt.target.value)*2).setCoords();
+              // rect.set("width",Number(this.activeObject.width)+ Number(evt.target.value)*2).setCoords();
+              // rect.set("height",Number(this.activeObject.height) + Number(evt.target.value)*2).setCoords();
+              // this.activeObject.set("width",Number(this.activeObject.width) + Number(evt.target.value)*2).setCoords();
+              // this.activeObject.set("height",Number(this.activeObject.height) + Number(evt.target.value)*2).setCoords();
               rect.set("left",Number(rect.left) - Number(evt.target.value)).setCoords();
               rect.set("top",Number(rect.top) - Number(evt.target.value)).setCoords();
 
             }else{
-
-              rect.set("width",Number(this.activeObject.width)- Number(this.activeObject.tempValueForPadding)*2);
-              rect.set("height",Number(this.activeObject.height) - Number(this.activeObject.tempValueForPadding)*2);
-              this.activeObject.set("width",Number(this.activeObject.width) - Number(this.activeObject.tempValueForPadding)*2);
-              this.activeObject.set("height",Number(this.activeObject.height) - Number(this.activeObject.tempValueForPadding)*2);
+              // rect.set("width",Number(this.activeObject.width)- Number(this.activeObject.tempValueForPadding)*2);
+              // rect.set("height",Number(this.activeObject.height) - Number(this.activeObject.tempValueForPadding)*2);
+              // this.activeObject.set("width",Number(this.activeObject.width) - Number(this.activeObject.tempValueForPadding)*2);
+              // this.activeObject.set("height",Number(this.activeObject.height) - Number(this.activeObject.tempValueForPadding)*2);
               rect.set("left",Number(rect.left)+Number(this.activeObject.tempValueForPadding)).setCoords();
               rect.set("top",Number(rect.top)+Number(this.activeObject.tempValueForPadding)).setCoords();     
-
             }
 
             this.activeObject.tempValueForPadding = evt.target.value;
-            this.canvas.c.requestRenderAll();
-            this.reSetObj();
 
+
+            if(this.canvas.c.getActiveObject().customType == "text"){
+              this.hiddenOutArea(this.canvas.c.getActiveObject());
+            }
+            this.fixTextPosition();            
+            this.canvas.c.requestRenderAll();
             return;                
           }
-
-          if(key == "text"){
-            this.activeObject.set("text",evt).setCoords();
-            const activeObject = this.canvas.c.getActiveObject();
-            if(activeObject.width<activeObject._objects[1].width && this.selected_text_manage_type == "shorten"){
-              this.hiddenOutArea(activeObject);
-            }
-            if(activeObject.width<activeObject._objects[1].width && this.selected_text_manage_type == "automatic"){
-              console.log("aaaaa")
-              this.showOutArea(activeObject);
-            }            
-            return;
-          }
+          
           // Rotation Angle Adaptation
           if (key === 'angle') {
               this.activeObject.rotate(Number(evt.target.value)).setCoords();
@@ -969,15 +974,17 @@ export default {
             this.canvas.c.renderAll();
             return;              
           }
-          if(key == "round"){
-            this.activeObject = this.canvas.c.getActiveObject()._objects[0];
-            this.activeObject.set("ry", Number(evt.target.value)).setCoords();
-            this.activeObject.set("rx", Number(evt.target.value)).setCoords();
+
+          if(key == "fontsize"){
+            this.activeObject.set(key, Number(evt.target.value)).setCoords();
+            this.changeHandleLongText();
+            this.fixTextPosition();
+            this.hiddenOutArea(this.canvas.c.getActiveObject());
             this.canvas.c.renderAll();
             return;
           }
+          
           this.activeObject && this.activeObject.set(key, Number(evt.target.value)).setCoords();
-          this.reSetObj();
           this.canvas.c.renderAll();
         },    
   }    
