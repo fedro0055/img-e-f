@@ -1,5 +1,6 @@
 <template>
 <div>
+      <img src="" id="img"/>
   <div style="display:none">
       <div id="workspace" style="width: 920px;height:500px; position: relative; background: #f1f1f1;">
         <div class="canvas-box">
@@ -17,13 +18,11 @@
         v-for="(item, index) in user_templates"
         :key="index"
         >
-        
           <router-link :to="'/editor/edit/'+item.id">
             <div class="image-box" imgId = {{item.id}}>
               <img v-bind:src="item.image_url" style="width:150px;height:150px;"/>
             </div>
           </router-link>
-
       </div>      
     </div>
   </div>
@@ -34,13 +33,11 @@
 // functional components
 import EventHandle from '@/utils/eventHandler';
 import EditorWorkspace from '@/core/EditorWorkspace';
-
 import { fabric } from 'fabric';
 import Editor from '@/core';
 import {getAllUserTemps} from "@/service/endpoint";
 const event = new EventHandle();
 const canvas = {};
-
 export default {
   name: 'Templates',
   data(){

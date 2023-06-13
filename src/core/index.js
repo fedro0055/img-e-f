@@ -30,7 +30,6 @@ class Editor extends EventEmitter {
       if(arg.id != "workspace"){
         return arg.type == type;
       }
-
     });
     if(type == "rect"){
       return type+"#"+(items.length);
@@ -53,15 +52,14 @@ class Editor extends EventEmitter {
     if(obj.position.positionY == "yCenter"){
       positionY = 0 - (obj._objects[1].height * obj._objects[1].scaleY) / 2;
     }
-  
+    
     if(obj.position.positionY == "top"){
       positionY = -(obj.height / 2);
     }
     if(obj.position.positionY == "bottom"){
       positionY = obj.height / 2 - obj._objects[1].height * obj._objects[1].scaleY;
     }
-  
-    
+      
     var position = {
       left:positionX,
       top:positionY
@@ -176,7 +174,6 @@ class Editor extends EventEmitter {
       this.canvas.renderAll();
       this._workspaceSendToBack();      
     }
- 
   }
 
   downTop() {
@@ -200,7 +197,7 @@ class Editor extends EventEmitter {
   }
 
   getJson() {
-    return this.canvas.toJSON(['id','nonBgImageState','ttf_base64','fontFamilyList','name','texthandle','scaling','item_name','position','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
+    return this.canvas.toJSON(['id','bgState','originPoistion','fontLists','strokeLabel','ttf_base64','fontFamilyList','name','texthandle','scaling','item_name','position','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"]);
   }
 
   /**
@@ -209,6 +206,7 @@ class Editor extends EventEmitter {
    * @param {Object} item
    */
   dragAddItem(event, item) {
+    
     const { left, top } = this.canvas.getSelectionElement().getBoundingClientRect();
     if (event.x < left || event.y < top) return;
 
@@ -223,8 +221,8 @@ class Editor extends EventEmitter {
     this.canvas.requestRenderAll();
   }
 
-  checkLayerPeriod(){
-      var items = this.canvas.getObjects();
+  checkLayerPeriod(items){
+      // var items = this.canvas.getObjects();
       var nowDate = new Date();
       var date = nowDate.getDate();
       var month = nowDate.getMonth()+1;
@@ -332,7 +330,7 @@ class Editor extends EventEmitter {
     return imgUrl;
 
   }
-
+  //change short tag
   changeTags(jsonFile,tags,final_product_image){
     var obj = jsonFile.objects.map((item)=>{
       if(item.customType == "text" && item.type == "group"){
@@ -383,124 +381,118 @@ class Editor extends EventEmitter {
   }
   
   changeProductImageLists(final_product_image,tags,index){
-
-      var jsonFile = JSON.stringify(this.changeTags(this.getJson(),tags,final_product_image));
-      var canvas = document.createElement("CANVAS");
-      canvas.id = "tempCanvas";
-      canvas.style.display = "none";
-
-      var canvasClone = new fabric.Canvas("tempCanvas",{
-        fireRightClick: true,
-        stopContextMenu: true,
-        controlsAboveOverlay: true,        
-      });
-
-      canvasClone.loadFromJSON(jsonFile, async () => {
-        
-        canvasClone.renderAll.bind(canvasClone);
-        const productImage = canvasClone.getObjects().find((item) => item.id === "productImage" || item.id == "nonBgImage");
-        if(productImage.nonBgImageState === true){
-
-          var config = {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
-              "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization"               
-            },      
-            responseType: 'arraybuffer'    
-          }
-
-          await axios.get("https://images.tidy.shopping/removebg"+"?imgurl="+final_product_image.image_link,config).then(res=>{
-            var arrayBufferView = res.data
-            var blob = new Blob([arrayBufferView],{ type: "image/png" });
-            var urlCreator = window.URL || window.webkitURL;
-            var imageUrl = urlCreator.createObjectURL(blob);
-            final_product_image.image_link = imageUrl;     
-          });          
-            
-        }
-          await fabric.Image.fromURL(final_product_image.image_link, async (final_product_image) => {
-            
-            if(productImage.nonBgImageState != true){
-             final_product_image._element.crossOrigin = await 'anonymous';
-            }
-            final_product_image.set({
-                  left: productImage.left,
-                  top: productImage.top,
-                  layerShowPeriod:productImage.layerShowPeriod,
-                  id: productImage.id,
-                  angle: productImage.angle,
-                  item_name: "final_product_image"
-                }).setCoords();
-                if(productImage.width*productImage.scaleX>final_product_image.width){
-                  final_product_image.scaleToWidth(final_product_image.width).setCoords();
-                  final_product_image.set("left",final_product_image.left/2+ final_product_image.width*final_product_image.scaleX).setCoords();
-                  final_product_image.set("top",final_product_image.top/2).setCoords();                    
-                }else{
-
-                  final_product_image.scaleToWidth(productImage.width*productImage.scaleX).setCoords();
-                  //set position
-                  var diffWidth = productImage.width*productImage.scaleX-final_product_image.width*final_product_image.scaleX;
-                  var diffHeight = productImage.height*productImage.scaleY-final_product_image.height*final_product_image.scaleY; 
-                  final_product_image.set("left",final_product_image.left-diffWidth/2).setCoords();
-                  final_product_image.set("top",final_product_image.top+diffHeight/2).setCoords();   
-
-                }
-
-            canvasClone.remove(productImage); 
-            canvasClone.add(final_product_image);
-  
-            setTimeout(() => {
-              const workspace = canvasClone.getObjects().find((item) => item.id === 'workspace');
-              const { left, top, width, height } = workspace;                  
-                const option = {
-                  name: 'New Image',
-                  format: 'png',
-                  quality: 1,
-                  left,
-                  top,
-                  width,
-                  height,
-                };
-                var oldViewport = canvasClone.viewportTransform;
-                canvasClone.setViewportTransform([1, 0, 0, 1, 0, 0]);
-                const imgUrl = canvasClone.toDataURL(option);
-                canvasClone.setViewportTransform(oldViewport);  
-                canvasClone.requestRenderAll();
-                canvasClone.renderAll();          
-                document.getElementById("preview"+(index)).src =imgUrl;  
-              }, 2000);
-        });           
+    var productImageIndex = this.getJson().objects.findIndex(el=>{
+      return el.customType === "productImage";
     });
-  }
+    var jsonFile = JSON.stringify(this.changeTags(this.getJson(),tags,final_product_image));
+    var canvas = document.createElement("CANVAS");
+    canvas.id = "tempCanvas";
+    canvas.style.display = "none";
+    var canvasClone = new fabric.Canvas("tempCanvas",{
+      fireRightClick: true,
+      stopContextMenu: true,
+      controlsAboveOverlay: true,        
+    });
 
-  //change productimage of main canvas
-  changeProductImage(final_product_image){
-    const productImage = this.canvas.getObjects().find((item) => item.id === "productImage");
+    canvasClone.loadFromJSON(jsonFile, async () => {
+      canvasClone.renderAll.bind(canvasClone);
+      this.checkLayerPeriod(canvasClone.getObjects());
+      const productImage = canvasClone.getObjects().find((item) => item.id === "productImage" || item.id == "nonBgImage");
+      if(productImage.bgState === true){
 
-    fabric.Image.fromURL(final_product_image.image_link, (final_product_image) => {
-      final_product_image._element.crossOrigin = 'anonymous'
-      final_product_image.set({
-            left: productImage.left,
-            top: productImage.top,
+        var config = {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization"               
+          },      
+          responseType: 'arraybuffer'    
+        }
+
+        await axios.get("https://images.tidy.shopping/removebg"+"?imgurl="+final_product_image.image_link,config).then(res=>{
+          var arrayBufferView = res.data
+          var blob = new Blob([arrayBufferView],{ type: "image/png" });
+          var urlCreator = window.URL || window.webkitURL;
+          var imageUrl = urlCreator.createObjectURL(blob);
+          final_product_image.image_link = imageUrl;     
+        });
+
+      }
+      fabric.Image.fromURL(final_product_image.image_link, async (final_product_image) => {
+        final_product_image._element.crossOrigin = 'Anonymous';
+        if(productImage.width >= productImage.height){
+          
+          final_product_image.set({
+            scaleY:productImage.height/final_product_image.height,
+            scaleX:productImage.height/final_product_image.height,
             layerShowPeriod:productImage.layerShowPeriod,
             id: productImage.id,
+            angle: productImage.angle,
             item_name: "final_product_image"
           }).setCoords();
-      final_product_image.scaleToWidth(productImage.width*productImage.scaleX).setCoords();
-      //set position
-      var diffWidth = productImage.width*productImage.scaleX-final_product_image.width*final_product_image.scaleX;
-      var diffHeight = productImage.height*productImage.scaleY-final_product_image.height*final_product_image.scaleY;
 
-      final_product_image.set("left",final_product_image.left-diffWidth/2).setCoords();
-      final_product_image.set("top",final_product_image.top+diffHeight/2).setCoords();
-      this.canvas.remove(productImage); 
-      this.canvas.add(final_product_image);
-      this.canvas.requestRenderAll();
-      this.canvas.discardActiveObject();    
-      
-    });    
+        }else{
+
+          final_product_image.set({
+            scaleY:productImage.width/final_product_image.width,
+            scaleX:productImage.width/final_product_image.width,
+            layerShowPeriod:productImage.layerShowPeriod,
+            id: productImage.id,
+            angle: productImage.angle,
+            item_name: "final_product_image"
+          }).setCoords();        
+
+        }
+
+        if(final_product_image.width*final_product_image.scaleX > productImage._objects[1].width && final_product_image.height*final_product_image.scaleY > productImage._objects[1].height){
+          final_product_image.set({
+            scaleY:productImage._objects[1]._element.naturalHeight/final_product_image.width,
+            scaleX:productImage._objects[1]._element.naturalWidth/final_product_image.width,
+            layerShowPeriod:productImage.layerShowPeriod,
+            id: productImage.id,
+            angle: productImage.angle,
+            item_name: "final_product_image"
+          }).setCoords();     
+        }
+
+        final_product_image.setPositionByOrigin(new fabric.Point(productImage.left + productImage.width*productImage.scaleX / 2, productImage.top + productImage.height*productImage.scaleX / 2), 'center', 'center')
+        canvasClone.remove(productImage); 
+        canvasClone.add(final_product_image);
+        setTimeout(() => {
+          var cloneJson = canvasClone.toJSON(['id','bgState','originPoistion','fontLists','strokeLabel','ttf_base64','fontFamilyList','name','texthandle','scaling','item_name','position','layerShowPeriod','customType', 'gradientAngle', 'selectable', 'hasControls',"fillState","borderState"])
+          var finalProductImage = cloneJson.objects[cloneJson.objects.length-1];
+          var temp = cloneJson.objects[productImageIndex];
+          cloneJson.objects[productImageIndex] = finalProductImage;
+          cloneJson.objects[cloneJson.objects.length-1] = temp;    
+          var jsonFile =  JSON.stringify(cloneJson); 
+
+          canvasClone.loadFromJSON(jsonFile, async () => {
+            canvasClone.renderAll.bind(canvasClone);
+            const workspace = canvasClone.getObjects().find((item) => item.id === 'workspace');
+            const { left, top, width, height } = workspace;                  
+            const option = {
+              name: 'New Image',
+              format: 'png',
+              quality: 1,
+              left,
+              top,
+              width,
+              height,
+            };
+            var oldViewport = canvasClone.viewportTransform;
+            canvasClone.setViewportTransform([1, 0, 0, 1, 0, 0]);
+            const imgUrl = canvasClone.toDataURL(option);
+            canvasClone.setViewportTransform(oldViewport);  
+            canvasClone.requestRenderAll();
+            document.getElementById("preview"+(index)).src = imgUrl;
+          });          
+            
+        }, 2000);
+        });  
+        
+        
+    });
   }
 
 }

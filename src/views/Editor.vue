@@ -56,7 +56,6 @@
 
         <!-- --------------------------------- Left Side ----------------------------------- -->
         <div id="workspace">
-          <!-- <div class="canvas-box"> -->
           <div>
             <div class="inside-shadow">
             
@@ -84,6 +83,8 @@
         <div class="right-box">
           <div v-if="show">
             <set-size></set-size> 
+           <group></group>
+
           </div>
             <attribute v-if="show"></attribute>            
         </div>
@@ -105,6 +106,7 @@ import zoom from '@/components/zoom.vue';
 // left component
 import tools from '@/components/tools.vue';
 import setSize from '@/components/setSize.vue';
+import group from '@/components/group.vue';
 
 // right side component
 import attribute from '@/components/attribute.vue';
@@ -151,16 +153,20 @@ export default {
     importFile,
     save,
     zoom,
-    loader
+    loader,
+    group
   },
 
   mounted() {
-
     this.canvas = new fabric.Canvas('canvas', {
       fireRightClick: true,
       stopContextMenu: true,
       controlsAboveOverlay: true,
+      perPixelTargetFind: true,               
+      targetFindTolerance: 4,                 
+      preserveObjectStacking: true         
     });
+
     canvas.c = this.canvas;
     event.init(canvas.c);
     canvas.editor = new Editor(canvas.c);
@@ -181,26 +187,18 @@ export default {
           const activeObject = this.canvas.getActiveObjects();
           if (activeObject) {
             activeObject.map((item) => {
-
               if(item.id == "productImage" || item.id == "trimImage" || item.id == "nonBgImage"){
                 return false;
               }else{
                 this.canvas.remove(item)
               }
-
             });
           }
           this.canvas.requestRenderAll();
           this.canvas.discardActiveObject();          
         }
       });      
-      // get references to the window object and the element you want to track
       const windowObj = window;
-      const element = document.getElementById('content');
-
-      // define a function to handle the resize event
-
-
       windowObj.addEventListener('resize', this.handleResize);
       // call the handler once to get the initial width and height values
       this.handleResize(this);      
@@ -221,6 +219,7 @@ export default {
   
 #canvas {
   filter: drop-shadow(0px 5px 10px #d1d1d1);
+  overflow-y: scroll;
 }
 span {
   font-size: 12px !important;
@@ -235,21 +234,7 @@ span {
   padding: 10px;
   border-radius:10px
 }
-
-// .container {
-//   font-family: arial;
-//   font-size: 24px;
-//   margin: 25px;
-//   width: 350px;
-//   height: 200px;
-//   outline: dashed 1px black;
-//   /* Setup */
-//   position: relative;
-// }
-
 .child {
-  // width: 50px;
-  // height: 50px;
   background-color: red;
   /* Center vertically and horizontally */
   z-index: 10000;

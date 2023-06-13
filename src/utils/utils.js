@@ -31,8 +31,6 @@ export function downFontByJSON(str) {
   const fontFamilys = JSON.parse(str)
     .objects.filter(
       (item) =>
-        // 为text 并且不为包含字体
-        // eslint-disable-next-line implicit-arrow-linebreak
         item.type.includes('text') && !skipFonts.includes(item.fontFamily)
     )
     .map((item) => item.fontFamily);
@@ -45,7 +43,7 @@ export function downFontByJSON(str) {
 
 
 /**
- * @description: 选择文件
+ * @description:
  * @param {Object} options accept = '', capture = false, multiple = false
  * @return {Promise}
  */

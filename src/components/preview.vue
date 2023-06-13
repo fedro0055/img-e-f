@@ -39,10 +39,9 @@
                         <div class="col-10">
                             <div class="font-s">{{item.name}}</div>
                         </div>
-
                     </div>
                     <div class="image-size mt-2">
-                        <img class="ivu-image-img" alt="" :id="'preview'+index" src="@/assets/img/preview.png" loading="eager">
+                        <img class="ivu-image-img" style="visibility:visible;" alt="" :id="'preview'+index" src="@/assets/img/preview.png" loading="eager">
                     </div>
                     <hr style="margin: 10px 0px;"/>                
                 </div>              
@@ -82,33 +81,34 @@ export default {
   methods: {
 
     showPreview(){
-            this.loaderActive = true;
-            getShortTags().then((tags)=>{
-                var a = getPreviewImage(this.keyword).then(async (res)=>{
-                    let promise = new Promise((resolve, reject) => {
-                        this.product_images = res.data;
-                        this.product_images.forEach((item,index)=>{
-                            var first_product_image = item;
-                            if(first_product_image!=null){
-                                this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
-                            }
-                            if(index == this.product_images.length-1){
-                                return "done";
-                            }
-                        });                   
-                        // setTimeout(() => resolve("Promise resolved!"), 1000)
-                    });     
-                    let result = await promise;               
-                    return result;
+        this.loaderActive = true;
+        getShortTags().then((tags)=>{
+            var a = getPreviewImage(this.keyword).then(async (res)=>{
+                let promise = new Promise((resolve, reject) => {
+                    this.product_images = res.data;
+                    this.product_images.forEach((item,index)=>{
+                        var first_product_image = item;
+                        if(first_product_image!=null){
+                            
+                            this.canvas.editor.changeProductImageLists(first_product_image,tags.data,index);
+                        }
+                        if(index == this.product_images.length-1){
+                            return "done";
+                        }
+                    });                   
+                    // setTimeout(() => resolve("Promise resolved!"), 1000)
+                });     
+                let result = await promise;               
+                return result;
 
-                    // this.loaderActive = await false
-                });   
+                // this.loaderActive = await false
+            });   
 
-                setTimeout(() => {
-                    this.loaderActive = false
-                }, 7000);
-            });
-        },
+            setTimeout(() => {
+                this.loaderActive = false
+            }, 7000);
+        });
+    },
 
     }
 };

@@ -79,7 +79,7 @@ export default {
         ...defaultPosition,
         ...option,
 	      fontFamily: 'Courier New',
-        fontSize: 20,
+        fontSize: 60,
         id: uuid(),
       });
       text.set("width",text.width);
@@ -89,7 +89,7 @@ export default {
           fill: '',
           strokeWidth:0,
           opacity: 100,
-          id:"virtural"
+          id:"virtural",
       });
       var group = new fabric.Group([rect, text]);
       group.set({
@@ -97,37 +97,24 @@ export default {
         left:0-group.width,
         customType:"text",
         item_name:this.canvas.editor.getName("text"),
+        angle:0,
         layerShowPeriod:{
           mode:'',
           startDate:'',
           endDate:''
         },
         texthandle:"automatic",
-        fontFamilyList:[
-          {
-            name:"Arial",
-            ttf_base64:''
-          },
-          {
-            name:"Verdana",
-            ttf_base64:''
-          },
-          {
-            name:"Courier New",
-            ttf_base64:''
-          },
-          
-        ],
         position:{
           positionX:"left",
           positionY:"top"
-        }
+        },
+		    originPoistion:"left",        
       });
       
 	    group.setCoords();
       this.canvas.c.add(group);
-      rect.set("width",group.width*group.scaleX+5);
-      rect.set("height",group.height*group.scaleY+5);
+      rect.set("width",group.width*group.scaleX);
+      rect.set("height",group.height*group.scaleY);
       this.canvas.c.centerObject(group);
       this.canvas.c.setActiveObject(group);
     },

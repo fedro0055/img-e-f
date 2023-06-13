@@ -97,7 +97,7 @@ import { v4 as uuid } from 'uuid';
 import {productImage} from '@/utils/imgConstant';
 import {getAllTemps,getTempById,getUserTempById,getAllElements,getElementById} from "@/service/endpoint";
 import Loader from "./loader1.vue";
-
+import OpenType from 'opentype.js';
 export default {
   name: 'ToolBar',
   mixins: [select],
@@ -205,6 +205,7 @@ export default {
     },
 
     canvasUpdateByJson(jsonFile){
+
       this.canvas.c.loadFromJSON(jsonFile, () => {
         this.canvas.c.renderAll.bind(canvas.c);
         const workspace = this.canvas.c.getObjects().find((item) => item.id === 'workspace');
@@ -212,16 +213,46 @@ export default {
         workspace.set('selectable', false);
         workspace.set('hasControls', false);
         this.canvas.editor.editorWorkspace.setSize(workspace.width, workspace.height);
+        // this.canvas.c.getObjects().filter(arg=>{
+        //   arg
+        // });
+
+
         this.canvas.c.renderAll();
         this.canvas.c.requestRenderAll();
-      });      
-    },
+      });
 
+    },
+    loadFonts(fontLists){
+      if(!window.globalFonts){
+        window.globalFonts = fontLists;
+      }else{
+        var temp = [...window.globalFonts, ... fontLists];
+        window.globalFonts = Array.from(new Set(temp.map(JSON.stringify)), JSON.parse);
+      }
+      window.globalFonts.forEach(el=>{
+        if(el.ttf_base64 != ''){
+          const charArray = el.ttf_base64.split('').map(function (char) {
+            return char.charCodeAt(0);
+          });
+
+          const uint8Array = new Uint8Array(charArray);
+          const fontBuffer = uint8Array.buffer;   
+          const font = OpenType.parse(fontBuffer);
+          var fontName = font.names.fontFamily.en;            
+          var fontFace = new FontFace(fontName, fontBuffer);
+          document.fonts.add(fontFace);    
+        }
+      }); 
+    },
     insertFileFromJSON(id){
       getUserTempById(id)
         .then(resp => {
           var data = resp.data;
-          document.getElementById("canvasName").value = data.template_name;
+          document.getElementById("canvasName").value = data.name;
+          if(data.fontLists){
+            this.loadFonts(data.fontLists);         
+          }
           var jsonFile = JSON.stringify(data);
           this.canvas.c.loadFromJSON(jsonFile, () => {
             this.canvas.c.renderAll.bind(canvas.c);
@@ -230,6 +261,7 @@ export default {
               workspace.set('selectable', false);
               workspace.set('hasControls', false);
               this.canvas.editor.editorWorkspace.setSize(workspace.width, workspace.height);
+
               this.canvas.c.requestRenderAll();
               this.canvas.c.renderAll();
           });
@@ -240,9 +272,9 @@ export default {
     },
     insertDemoTemplate(id){
       getTempById(id).then(res=>{
-
         var data = res.data;
         var jsonFile = JSON.stringify(data);
+        this.loadFonts(data.fontLists);         
         this.canvasUpdateByJson(jsonFile);
         document.getElementById("canvasName").value = data.template_name;
         this.template = false;
@@ -279,6 +311,7 @@ export default {
 
         }
 
+        this.loadFonts(data.fontLists);         
         this.canvasUpdateByJson(dataUrl);
         setTimeout(() => {
           var temp = [];
@@ -404,36 +437,52 @@ export default {
 
     // insert empty file
     insertProductImage(file,type) {
-      
-       setTimeout(() => {
+        setTimeout(() => {
+        
           const imgEl = document.createElement('img');
           imgEl.src = file || this.imgFile;
           document.body.appendChild(imgEl);
           imgEl.onload = () => {
             // Create a picture object
-          var name = this.canvas.editor.getName("image");
-          const imgInstance = new this.fabric.Image(imgEl, {
-            id: "productImage",
-            item_name:'Product Image',
-            nonBgImageState:false,
-            layerShowPeriod:{
-              mode:'',
-              startDate:'',
-              endDate:''
-            }
-          });
-          
-          this.canvas.c.add(imgInstance);
-          this.canvas.c.centerObject(imgInstance);
-          this.canvas.c.setActiveObject(imgInstance);
-          this.canvas.c.renderAll();
+            const imgInstance = new this.fabric.Image(imgEl, {
+              id: "productImage",
+              name: 'Product Image',
+            });
+            var rect = new fabric.Rect({
+                height: 0,
+                width: 0,
+                fill: '',
+                strokeWidth:0,
+                opacity: 100,
+                id:"virtural"
+            });      
 
-          // set zoom
-          imgEl.remove();
+            var group = new fabric.Group([rect, imgInstance]);
+            group.set({
+              id: "productImage",
+              item_name:'Product Image',
+              layerShowPeriod:{
+                mode:'',
+                startDate:'',
+                endDate:''
+              },
+              bgState:false,
+              customType:"productImage",
+              left:0-group.width,
+            });
+            
+            this.canvas.c.add(group);
+            rect.set("width",group.width*group.scaleX);
+            rect.set("height",group.height*group.scaleY);
+            this.canvas.c.centerObject(group);
+            this.canvas.c.setActiveObject(group);
+            this.canvas.c.renderAll();
+            // set zoom
+            imgEl.remove();
 
              
         };          
-      }, 100);
+      }, 100); 
     },    
     
     // insert image file
@@ -446,6 +495,9 @@ export default {
         // Create a picture object
 
         var name = this.canvas.editor.getName("image");
+        var product = this.canvas.c.getObjects().filter(arg=>{
+          return arg.id == "productImage"
+        })
         const imgInstance = new this.fabric.Image(imgEl, {
           id: uuid(),
           item_name:name,
@@ -454,12 +506,10 @@ export default {
             mode:'',
             startDate:'',
             endDate:''
-          }          
+          },
+       
         }).setCoords();
-
         this.canvas.c.add(imgInstance);
-
-        this.canvas.c.centerObject(imgInstance);
         this.canvas.c.setActiveObject(imgInstance);
 
         // // Remove image elements from the page
